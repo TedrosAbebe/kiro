@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .logs { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        pre { margin: 0; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Registration Debug Test</h1>
+        
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" value="Test User" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" value="+251911111111" required>
+                <small>Try: +251911111111, 0911111111, or 251911111111</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="123456" required>
+                <small>Minimum 6 characters</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select id="role">
+                    <option value="user">User (Property Seeker)</option>
+                    <option value="broker" selected>Broker (Property Agent)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="whatsapp">WhatsApp Number (Optional):</label>
+                <input type="tel" id="whatsapp" placeholder="Leave blank to use phone number">
+            </div>
+            
+            <button type="submit">🚀 Test Registration</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div class="logs">
+            <h3>📊 Console Logs:</h3>
+            <pre id="logs">Check browser console (F12) for detailed logs...</pre>
+        </div>
+        
+        <div class="logs">
+            <h3>💡 Debugging Tips:</h3>
+            <ul>
+                <li><strong>Check server console</strong> - Look for detailed registration logs with emojis</li>
+                <li><strong>Check browser console (F12)</strong> - Look for any JavaScript errors</li>
+                <li><strong>Try different phone formats</strong> - +251911111111, 0911111111, 251911111111</li>
+                <li><strong>Check database file</strong> - Should be created at: data/broker.db</li>
+                <li><strong>Restart server</strong> - Sometimes helps with database initialization</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logsElement = document.getElementById('logs');
+        let logMessages = [];
+
+        function addLog(type, ...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            logMessages.push(`[${type.toUpperCase()}] ${message}`);
+            logsElement.textContent = logMessages.join('\n');
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog('log', ...args);
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog('error', ...args);
+        };
+
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+                whatsappNumber: document.getElementById('whatsapp').value
+            };
+            
+            console.log('📝 Starting registration test with data:', formData);
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="logs">⏳ Testing registration...</div>';
+            
+            try {
+                console.log('📡 Sending registration request...');
+                
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const result = await response.json();
+                console.log('📡 Response data:', result);
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Registration Successful!</h3>
+                            <p><strong>User ID:</strong> ${result.user.id}</p>
+                            <p><strong>Name:</strong> ${result.user.name}</p>
+                            <p><strong>Phone:</strong> ${result.user.phone}</p>
+                            <p><strong>Role:</strong> ${result.user.role}</p>
+                            <p><strong>Token:</strong> ${result.token ? 'Generated ✅' : 'Missing ❌'}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Registration Failed</h3>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Registration test error:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Network/JavaScript Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Check if the server is running and accessible.</p>
+                    </div>
+                `;
+            }
+        });
+        
+        console.log('🧪 Registration test page loaded');
+        console.log('💡 Fill the form and click "Test Registration" to debug');
+    </script>
+</body>
+</html>

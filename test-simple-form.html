@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Property Test</title>
+</head>
+<body>
+    <h1>Simple Property Creation Test</h1>
+    
+    <form id="testForm">
+        <div>
+            <label>Title:</label>
+            <input type="text" id="title" value="Test Property" required>
+        </div>
+        <div>
+            <label>Price:</label>
+            <input type="number" id="price" value="200000" required>
+        </div>
+        <div>
+            <label>City:</label>
+            <input type="text" id="city" value="Addis Ababa" required>
+        </div>
+        <div>
+            <label>Area:</label>
+            <input type="text" id="area" value="Bole" required>
+        </div>
+        <div>
+            <label>Type:</label>
+            <select id="type">
+                <option value="house_sale">House for Sale</option>
+                <option value="house_rent">House for Rent</option>
+            </select>
+        </div>
+        <div>
+            <label>Size:</label>
+            <input type="number" id="size" value="150" required>
+        </div>
+        <div>
+            <label>Phone:</label>
+            <input type="text" id="phone" value="+251911234567" required>
+        </div>
+        <div>
+            <label>WhatsApp:</label>
+            <input type="text" id="whatsapp" value="+251911234567" required>
+        </div>
+        <br>
+        <button type="button" onclick="testAPI()">Test API</button>
+        <button type="button" onclick="testSimpleAPI()">Test Simple API</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>Testing original API...</p>';
+            
+            const data = getFormData();
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/test-property', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const responseData = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<p style="color: green;">✅ Test API Success: ${responseData.message}</p>`;
+                } else {
+                    result.innerHTML = `<p style="color: red;">❌ Test API Failed: ${responseData.error}</p>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ Test API Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testSimpleAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>Testing simple properties API...</p>';
+            
+            const data = getFormData();
+            
+            // First login
+            try {
+                const loginResponse = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'broker1',
+                        password: 'broker123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (!loginData.success) {
+                    result.innerHTML = `<p style="color: red;">❌ Login Failed: ${loginData.error}</p>`;
+                    return;
+                }
+                
+                // Now test property creation
+                const response = await fetch('http://localhost:3001/api/properties-simple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${loginData.token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const responseData = await response.json();
+                
+                if (response.ok && responseData.success) {
+                    result.innerHTML = `<p style="color: green;">✅ Simple API Success! Property ID: ${responseData.property.id}</p>`;
+                } else {
+                    result.innerHTML = `<p style="color: red;">❌ Simple API Failed: ${responseData.error}</p>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ Simple API Error: ${error.message}</p>`;
+            }
+        }
+        
+        function getFormData() {
+            return {
+                title: document.getElementById('title').value,
+                price: document.getElementById('price').value,
+                city: document.getElementById('city').value,
+                area: document.getElementById('area').value,
+                type: document.getElementById('type').value,
+                size: document.getElementById('size').value,
+                whatsappNumber: document.getElementById('whatsapp').value,
+                phoneNumber: document.getElementById('phone').value,
+                description: 'Test property description',
+                bedrooms: 3,
+                bathrooms: 2,
+                features: ['Parking', 'Garden']
+            };
+        }
+    </script>
+</body>
+</html>

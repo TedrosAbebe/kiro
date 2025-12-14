@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Advertiser Properties Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .property-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .premium-badge {
+            background: linear-gradient(45deg, #8B5CF6, #EC4899);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .featured-badge {
+            background: linear-gradient(45deg, #F59E0B, #EF4444);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .advertiser-info {
+            background: linear-gradient(45deg, #3B82F6, #8B5CF6);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #059669;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #FEE2E2;
+            color: #DC2626;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #D1FAE5;
+            color: #065F46;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏠 Advertiser Properties Display Test</h1>
+    <p>Testing if advertiser properties are correctly displayed on the homepage with premium badges.</p>
+    
+    <div id="status" class="loading">Loading properties...</div>
+    <div id="properties-container"></div>
+
+    <script>
+        async function testAdvertiserProperties() {
+            const statusDiv = document.getElementById('status');
+            const container = document.getElementById('properties-container');
+            
+            try {
+                // Test both API endpoints
+                const [regularResponse, advertiserResponse] = await Promise.all([
+                    fetch('/api/properties-working'),
+                    fetch('/api/advertiser-properties')
+                ]);
+                
+                let allProperties = [];
+                
+                // Add regular properties
+                if (regularResponse.ok) {
+                    const regularData = await regularResponse.json();
+                    if (regularData.success) {
+                        allProperties = [...allProperties, ...regularData.properties];
+                    }
+                }
+                
+                // Add advertiser properties
+                if (advertiserResponse.ok) {
+                    const advertiserData = await advertiserResponse.json();
+                    if (advertiserData.success) {
+                        allProperties = [...allProperties, ...advertiserData.properties];
+                    }
+                }
+                
+                // Sort properties: featured first, then premium, then by date
+                allProperties.sort((a, b) => {
+                    if (a.isFeatured && !b.isFeatured) return -1;
+                    if (!a.isFeatured && b.isFeatured) return 1;
+                    if (a.isPremium && !b.isPremium) return -1;
+                    if (!a.isPremium && b.isPremium) return 1;
+                    return 0;
+                });
+                
+                if (allProperties.length === 0) {
+                    statusDiv.innerHTML = '<div class="error">❌ No properties found</div>';
+                    return;
+                }
+                
+                statusDiv.innerHTML = `<div class="success">✅ Found ${allProperties.length} properties (${allProperties.filter(p => p.advertiser).length} advertiser properties)</div>`;
+                
+                // Display properties
+                container.innerHTML = allProperties.map(property => `
+                    <div class="property-card">
+                        ${property.isFeatured ? '<div class="featured-badge">⭐ FEATURED</div>' : ''}
+                        ${property.isPremium && !property.isFeatured ? '<div class="premium-badge">💎 PREMIUM</div>' : ''}
+                        
+                        <h3>${property.title}</h3>
+                        
+                        ${property.advertiser ? `
+                            <div class="advertiser-info">
+                                <strong>🏢 ${property.advertiser.business}</strong><br>
+                                <small>Professional Advertiser</small>
+                            </div>
+                        ` : ''}
+                        
+                        <p><strong>📍 Location:</strong> ${property.location.area}, ${property.location.city}</p>
+                        <p><strong>🏠 Type:</strong> ${property.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                        <p><strong>📐 Size:</strong> ${property.size} m²</p>
+                        ${property.bedrooms ? `<p><strong>🛏️ Bedrooms:</strong> ${property.bedrooms}</p>` : ''}
+                        
+                        <div class="price">${new Intl.NumberFormat().format(property.price)} ${property.currency}</div>
+                        
+                        <p>${property.description}</p>
+                        
+                        <p><strong>📱 Contact:</strong> ${property.whatsappNumber} | ${property.phoneNumber}</p>
+                        
+                        ${property.advertiser && property.advertiser.email ? `
+                            <p><strong>📧 Email:</strong> ${property.advertiser.email}</p>
+                        ` : ''}
+                        
+                        ${property.advertiser && property.advertiser.website ? `
+                            <p><strong>🌐 Website:</strong> <a href="${property.advertiser.website}" target="_blank">${property.advertiser.website}</a></p>
+                        ` : ''}
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `<div class="error">❌ Error loading properties: ${error.message}</div>`;
+            }
+        }
+        
+        // Run test when page loads
+        testAdvertiserProperties();
+    </script>
+</body>
+</html>
+</content>
+</invoke>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Home Page Properties</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .property { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .status { padding: 5px 10px; border-radius: 3px; color: white; }
+        .approved { background-color: green; }
+        .pending { background-color: orange; }
+        .rejected { background-color: red; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .loading { text-align: center; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Home Page Properties Test</h1>
+        <p>Testing the properties that will appear on the home page after admin approval</p>
+        
+        <div id="propertiesContainer">
+            <div class="loading">Loading properties...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadProperties() {
+            try {
+                console.log('Fetching properties from /api/properties-public...');
+                
+                const response = await fetch('/api/properties-public');
+                const data = await response.json();
+                
+                console.log('Response:', data);
+                
+                if (data.success && data.properties) {
+                    displayProperties(data.properties);
+                } else {
+                    document.getElementById('propertiesContainer').innerHTML = 
+                        '<div class="loading">❌ Error loading properties: ' + (data.error || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('propertiesContainer').innerHTML = 
+                    '<div class="loading">❌ Error: ' + error.message + '</div>';
+            }
+        }
+
+        function displayProperties(properties) {
+            const approvedProperties = properties.filter(p => p.status === 'approved');
+            
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <h2>✅ Approved Properties (${approvedProperties.length} total)</h2>
+                    <p>These properties will appear on the home page:</p>
+                </div>
+                <div class="grid">
+            `;
+            
+            if (approvedProperties.length === 0) {
+                html += `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                        <h3>No approved properties found</h3>
+                        <p>Properties will appear here once approved by admin</p>
+                    </div>
+                `;
+            } else {
+                approvedProperties.forEach(property => {
+                    html += `
+                        <div class="property">
+                            <h3>${property.title}</h3>
+                            <p><strong>Price:</strong> ${new Intl.NumberFormat().format(property.price)} ETB</p>
+                            <p><strong>Location:</strong> ${property.area}, ${property.city}</p>
+                            <p><strong>Type:</strong> ${property.type} • <strong>Size:</strong> ${property.size} m²</p>
+                            <p><strong>Owner:</strong> ${property.owner_name || 'Unknown'}</p>
+                            <p><strong>Contact:</strong> ${property.phone_number} • WhatsApp: ${property.whatsapp_number}</p>
+                            <p><strong>Status:</strong> <span class="status ${property.status}">${property.status}</span></p>
+                            <p><strong>Created:</strong> ${new Date(property.created_at).toLocaleString()}</p>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '</div>';
+            
+            document.getElementById('propertiesContainer').innerHTML = html;
+        }
+
+        // Load properties when page loads
+        loadProperties();
+    </script>
+</body>
+</html>

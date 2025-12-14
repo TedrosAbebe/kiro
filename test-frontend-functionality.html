@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Functionality Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: white; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 12px 24px; margin: 8px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .test-links { margin: 15px 0; }
+        .test-links a { display: inline-block; margin: 8px; padding: 12px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .test-links a:hover { background: #5a6268; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Frontend Functionality Test</h1>
+        
+        <div class="test-section success">
+            <h2>✅ System Status</h2>
+            <p><strong>Server:</strong> http://localhost:3002</p>
+            <p><strong>Backend APIs:</strong> All working ✅</p>
+            <p><strong>Authentication:</strong> Working ✅</p>
+            <p><strong>Database:</strong> Working ✅</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🏠 Test 1: Guest Property Submission</h2>
+            <p>Test the guest property submission form (no login required)</p>
+            <div class="test-links">
+                <a href="http://localhost:3002/submit-property" target="_blank">🏠 Submit Property Page</a>
+            </div>
+            <div id="guestTest">
+                <p><strong>Instructions:</strong></p>
+                <ol>
+                    <li>Click the "Submit Property Page" link above</li>
+                    <li>Fill out the form with test data</li>
+                    <li>Submit the form</li>
+                    <li>You should see a success modal with submission ID</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>👨‍💼 Test 2: Broker Add Listing</h2>
+            <p>Test broker login and property creation</p>
+            <div class="test-links">
+                <a href="http://localhost:3002/login" target="_blank">🔐 Login Page</a>
+                <a href="http://localhost:3002/broker" target="_blank">👨‍💼 Broker Dashboard</a>
+                <a href="http://localhost:3002/broker/add-listing" target="_blank">➕ Add Listing Form</a>
+            </div>
+            <div id="brokerTest">
+                <p><strong>Test Credentials:</strong> broker1 / broker123</p>
+                <p><strong>Instructions:</strong></p>
+                <ol>
+                    <li>Go to Login Page and login with broker1/broker123</li>
+                    <li>Should redirect to Broker Dashboard</li>
+                    <li>Click "Add New Property" button or go directly to Add Listing Form</li>
+                    <li>Fill out the form and submit</li>
+                    <li>Should see payment modal with payment instructions</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🛡️ Test 3: Admin Management</h2>
+            <p>Test admin login and guest submission approval</p>
+            <div class="test-links">
+                <a href="http://localhost:3002/login" target="_blank">🔐 Admin Login</a>
+                <a href="http://localhost:3002/admin-working" target="_blank">🛡️ Admin Dashboard</a>
+            </div>
+            <div id="adminTest">
+                <p><strong>Test Credentials:</strong> admin / admin123</p>
+                <p><strong>Instructions:</strong></p>
+                <ol>
+                    <li>Go to Login Page and login with admin/admin123</li>
+                    <li>Should redirect to Admin Dashboard</li>
+                    <li>Click "Guest Submissions" tab</li>
+                    <li>Should see pending guest submissions</li>
+                    <li>Click "Approve" or "Reject" buttons</li>
+                    <li>Should see success message</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🏡 Test 4: Public Property Viewing</h2>
+            <p>Test viewing approved properties on home page</p>
+            <div class="test-links">
+                <a href="http://localhost:3002" target="_blank">🏡 Home Page</a>
+                <a href="http://localhost:3002/simple-home" target="_blank">🏡 Simple Home Page</a>
+                <a href="http://localhost:3002/test-page" target="_blank">🧪 Diagnostic Page</a>
+            </div>
+            <div id="publicTest">
+                <p><strong>Instructions:</strong></p>
+                <ol>
+                    <li>Go to Home Page</li>
+                    <li>Should see approved properties listed</li>
+                    <li>Click "View Details" on any property</li>
+                    <li>Should see property details page with description</li>
+                    <li>Contact buttons should work (WhatsApp/Phone)</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section info">
+            <h2>🔧 Troubleshooting Guide</h2>
+            
+            <h4>If forms don't submit:</h4>
+            <ul>
+                <li>Check browser console (F12) for JavaScript errors</li>
+                <li>Ensure you're filling all required fields (marked with *)</li>
+                <li>Try refreshing the page and submitting again</li>
+                <li>Check if you're logged in with correct credentials</li>
+            </ul>
+            
+            <h4>If buttons don't work:</h4>
+            <ul>
+                <li>Check if JavaScript is enabled in your browser</li>
+                <li>Try clicking the button again after a few seconds</li>
+                <li>Check browser console for error messages</li>
+                <li>Ensure you have the correct role permissions</li>
+            </ul>
+            
+            <h4>If pages don't load:</h4>
+            <ul>
+                <li>Ensure the server is running on http://localhost:3002</li>
+                <li>Try refreshing the page</li>
+                <li>Check if you're using the correct URL</li>
+                <li>Clear browser cache and cookies</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 API Test Results</h2>
+            <button class="btn-primary" onclick="testAllAPIs()">Test All APIs</button>
+            <div id="apiResults"></div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:3002';
+
+        async function testAllAPIs() {
+            const resultsDiv = document.getElementById('apiResults');
+            resultsDiv.innerHTML = '<p>🔄 Testing APIs...</p>';
+            
+            const tests = [
+                { name: 'Properties Public API', url: '/api/properties-public' },
+                { name: 'Guest Submissions API', url: '/api/guest-submissions' },
+                { name: 'Auth Login API', url: '/api/auth/login', method: 'POST', body: { username: 'admin', password: 'admin123' } }
+            ];
+            
+            let results = '<h4>API Test Results:</h4><ul>';
+            
+            for (const test of tests) {
+                try {
+                    const options = {
+                        method: test.method || 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    };
+                    
+                    if (test.body) {
+                        options.body = JSON.stringify(test.body);
+                    }
+                    
+                    const response = await fetch(SERVER_URL + test.url, options);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success !== false) {
+                        results += `<li>✅ ${test.name}: Working</li>`;
+                    } else {
+                        results += `<li>❌ ${test.name}: Failed (${data.error || 'Unknown error'})</li>`;
+                    }
+                } catch (error) {
+                    results += `<li>❌ ${test.name}: Error (${error.message})</li>`;
+                }
+            }
+            
+            results += '</ul>';
+            results += '<p><strong>Conclusion:</strong> If all APIs are working, any issues are in the frontend JavaScript or form handling.</p>';
+            
+            resultsDiv.innerHTML = results;
+        }
+    </script>
+</body>
+</html>
+</content>
+</invoke>

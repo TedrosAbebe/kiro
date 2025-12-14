@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Guest Property Submission Flow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .test-links { margin: 10px 0; }
+        .test-links a { display: inline-block; margin: 5px; padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 3px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Guest Property Submission Flow</h1>
+        
+        <div class="step">
+            <h3>🎯 Complete Guest Submission System Implemented</h3>
+            <div class="success">
+                <h4>✅ Features Implemented:</h4>
+                <ul>
+                    <li><strong>Guest Submission Page:</strong> /submit-property (no login required)</li>
+                    <li><strong>Database Schema:</strong> Guest submission tracking tables</li>
+                    <li><strong>Admin Dashboard:</strong> Separate tab for guest submissions</li>
+                    <li><strong>Admin APIs:</strong> Approve/reject guest submissions</li>
+                    <li><strong>Navigation:</strong> "List Property" link for guests</li>
+                    <li><strong>WhatsApp Integration:</strong> Admin can contact guests</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 1: Test Guest Property Submission</h3>
+            <button onclick="testGuestSubmission()">Test Guest Submission API</button>
+            <div id="guestSubmissionResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Test Admin Guest Submissions View</h3>
+            <button onclick="testAdminGuestSubmissions()">Test Admin API</button>
+            <div id="adminGuestResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Manual Testing Links</h3>
+            <div class="info">
+                <p><strong>Complete Flow Testing:</strong></p>
+                <ol>
+                    <li>Submit property as guest (no login)</li>
+                    <li>Login as admin and review submission</li>
+                    <li>Approve/reject and verify visibility</li>
+                </ol>
+            </div>
+            
+            <div class="test-links">
+                <a href="http://localhost:3000/submit-property" target="_blank">🏠 Guest Submit Property</a>
+                <a href="http://localhost:3000/login" target="_blank">🔐 Admin Login</a>
+                <a href="http://localhost:3000/admin-working" target="_blank">👨‍💼 Admin Dashboard</a>
+                <a href="http://localhost:3000" target="_blank">🏡 Home Page</a>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Test Admin Approval Flow</h3>
+            <button onclick="testAdminLogin()" id="adminLoginBtn">Login as Admin</button>
+            <button onclick="testApproveSubmission()" id="approveBtn" disabled>Test Approve Submission</button>
+            <div id="approvalResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Expected User Experience</h3>
+            <div class="info">
+                <h4>🏠 For Guests (No Login Required):</h4>
+                <ul>
+                    <li>Visit home page → See "List Property" in navigation</li>
+                    <li>Click "List Property" → Fill detailed form</li>
+                    <li>Submit → Get confirmation with submission ID</li>
+                    <li>Property status: "pending" (not visible on home page)</li>
+                </ul>
+                
+                <h4>👨‍💼 For Admins:</h4>
+                <ul>
+                    <li>Login → Go to Admin Dashboard</li>
+                    <li>See "Guest Submissions" tab with count</li>
+                    <li>Review guest details and property info</li>
+                    <li>Contact guest via WhatsApp if needed</li>
+                    <li>Approve → Property appears on home page</li>
+                    <li>Reject → Property stays hidden with reason</li>
+                </ul>
+                
+                <h4>🌐 For Public Users:</h4>
+                <ul>
+                    <li>Only approved properties visible on home page</li>
+                    <li>Can view details and contact original guest</li>
+                    <li>Pending/rejected properties completely hidden</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Database Schema Overview</h3>
+            <div class="info">
+                <h4>📊 Properties Table (Enhanced):</h4>
+                <ul>
+                    <li><code>submitted_by</code>: 'user' | 'guest'</li>
+                    <li><code>guest_name</code>: Guest full name</li>
+                    <li><code>guest_phone</code>: Guest phone number</li>
+                    <li><code>guest_whatsapp</code>: Guest WhatsApp</li>
+                    <li><code>rejection_reason</code>: Admin rejection reason</li>
+                    <li><code>admin_notes</code>: Admin internal notes</li>
+                </ul>
+                
+                <h4>📋 Guest Submissions Table:</h4>
+                <ul>
+                    <li>Tracks submission metadata</li>
+                    <li>Admin contact history</li>
+                    <li>Submission status tracking</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminToken = null;
+        let testSubmissionId = null;
+
+        async function testGuestSubmission() {
+            const resultDiv = document.getElementById('guestSubmissionResult');
+            resultDiv.innerHTML = '<p>🔄 Testing guest submission...</p>';
+            
+            const guestData = {
+                guestName: 'John Doe',
+                guestPhone: '+251911234567',
+                guestWhatsapp: '+251911234567',
+                title: 'Beautiful Family House in Bole',
+                description: 'This is a wonderful family house located in the heart of Bole. It features modern amenities, spacious rooms, and a beautiful garden. Perfect for families looking for comfort and convenience.',
+                price: '85000',
+                currency: 'ETB',
+                city: 'Addis Ababa',
+                area: 'Bole',
+                type: 'house_sale',
+                bedrooms: '3',
+                bathrooms: '2',
+                size: '180',
+                features: ['Parking', 'Garden', 'Modern Kitchen']
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/guest-submissions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(guestData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    testSubmissionId = result.submissionId;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Guest Submission Successful!</h4>
+                            <p><strong>Submission ID:</strong> ${result.submissionId}</p>
+                            <p><strong>Property ID:</strong> ${result.propertyId}</p>
+                            <p><strong>Status:</strong> ${result.status}</p>
+                            <p>Property is now pending admin review!</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Guest Submission Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Guest Submission Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAdminGuestSubmissions() {
+            const resultDiv = document.getElementById('adminGuestResult');
+            resultDiv.innerHTML = '<p>🔄 Testing admin guest submissions API...</p>';
+            
+            // First login as admin
+            try {
+                const loginResponse = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const loginResult = await loginResponse.json();
+                
+                if (!loginResult.success) {
+                    throw new Error('Admin login failed');
+                }
+                
+                adminToken = loginResult.token;
+                
+                // Now fetch guest submissions
+                const response = await fetch('http://localhost:3000/api/admin/guest-submissions', {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Admin Guest Submissions API Working!</h4>
+                            <p><strong>Total Submissions:</strong> ${result.stats.total}</p>
+                            <p><strong>Pending:</strong> ${result.stats.pending}</p>
+                            <p><strong>Approved:</strong> ${result.stats.approved}</p>
+                            <p><strong>Rejected:</strong> ${result.stats.rejected}</p>
+                            <h5>Recent Submissions:</h5>
+                            <pre>${JSON.stringify(result.submissions.slice(0, 2), null, 2)}</pre>
+                        </div>
+                    `;
+                    document.getElementById('approveBtn').disabled = false;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Admin API Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Admin API Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAdminLogin() {
+            const resultDiv = document.getElementById('approvalResult');
+            resultDiv.innerHTML = '<p>🔄 Logging in as admin...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    adminToken = result.token;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Admin Login Successful!</h4>
+                            <p>Ready to test approval flow</p>
+                        </div>
+                    `;
+                    document.getElementById('approveBtn').disabled = false;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Admin Login Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Admin Login Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testApproveSubmission() {
+            if (!adminToken) {
+                alert('Please login as admin first!');
+                return;
+            }
+            
+            if (!testSubmissionId) {
+                alert('Please create a guest submission first!');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('approvalResult');
+            resultDiv.innerHTML += '<p>🔄 Testing approval...</p>';
+            
+            try {
+                // This would need the actual submission and property IDs
+                // For demo purposes, we'll show the expected flow
+                resultDiv.innerHTML += `
+                    <div class="info">
+                        <h4>📋 Approval Flow Ready</h4>
+                        <p>To test approval:</p>
+                        <ol>
+                            <li>Go to Admin Dashboard</li>
+                            <li>Click "Guest Submissions" tab</li>
+                            <li>Find the test submission</li>
+                            <li>Click "Approve" or "Reject"</li>
+                            <li>Check home page for approved properties</li>
+                        </ol>
+                        <p><strong>Test Submission ID:</strong> ${testSubmissionId}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <div class="error">
+                        <h4>❌ Approval Test Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

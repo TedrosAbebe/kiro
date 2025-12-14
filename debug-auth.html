@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button { padding: 10px 15px; margin: 5px; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Authentication Debug Tool</h1>
+    
+    <div class="section">
+        <h2>📝 Test Registration</h2>
+        <input type="text" id="regName" placeholder="Full Name" value="Test User">
+        <input type="text" id="regPhone" placeholder="Phone" value="+251911111111">
+        <input type="password" id="regPassword" placeholder="Password" value="123456">
+        <select id="regRole">
+            <option value="user">User</option>
+            <option value="broker">Broker</option>
+        </select>
+        <button onclick="testRegistration()">Register</button>
+        <div id="regResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔐 Test Login</h2>
+        <input type="text" id="loginPhone" placeholder="Phone" value="+251911111111">
+        <input type="password" id="loginPassword" placeholder="Password" value="123456">
+        <button onclick="testLogin()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <script>
+        async function testRegistration() {
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regPhone').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+            
+            console.log('📝 Testing registration:', { name, phone, password, role });
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, password, role })
+                });
+                
+                const result = await response.json();
+                console.log('📝 Registration result:', result);
+                
+                const resultDiv = document.getElementById('regResult');
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="success">✅ Registration successful!<br>User: ${result.user.name}<br>Role: ${result.user.role}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Registration failed: ${result.error}</div>`;
+                }
+            } catch (error) {
+                console.error('❌ Registration error:', error);
+                document.getElementById('regResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testLogin() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            console.log('🔐 Testing login:', { phone, password });
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+                
+                const result = await response.json();
+                console.log('🔐 Login result:', result);
+                
+                const resultDiv = document.getElementById('loginResult');
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="success">✅ Login successful!<br>User: ${result.user.name}<br>Role: ${result.user.role}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Login failed: ${result.error}</div>`;
+                }
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                document.getElementById('loginResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

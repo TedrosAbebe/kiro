@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .debug-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .application-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .status-pending { border-left: 4px solid #ffc107; }
+        .status-approved { border-left: 4px solid #28a745; }
+        .status-rejected { border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Admin Dashboard Debug Tool</h1>
+        
+        <div class="debug-section">
+            <h3>🎯 Purpose</h3>
+            <p>This tool helps debug why advertiser applications are not displaying in the admin dashboard.</p>
+        </div>
+
+        <div class="debug-section">
+            <h3>📊 System Status</h3>
+            <div id="systemStatus">Checking...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔧 Debug Actions</h3>
+            <button class="btn btn-primary" onclick="testAPI()">Test API Endpoint</button>
+            <button class="btn btn-success" onclick="testAuth()">Test Authentication</button>
+            <button class="btn btn-danger" onclick="simulateAdminView()">Simulate Admin View</button>
+        </div>
+
+        <div class="debug-section">
+            <h3>📋 Advertiser Applications</h3>
+            <div id="applicationsDisplay">Loading...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🐛 Troubleshooting Steps</h3>
+            <ol>
+                <li><strong>Login Check:</strong> Make sure you're logged in as admin (tedayeerasu / 494841Abc)</li>
+                <li><strong>Dashboard Access:</strong> Navigate to /admin-working</li>
+                <li><strong>Tab Visibility:</strong> Look for "📢 Advertiser Applications (1 Pending)" tab</li>
+                <li><strong>Click Tab:</strong> Click on the advertiser applications tab</li>
+                <li><strong>Check Console:</strong> Open browser dev tools (F12) and check for errors</li>
+                <li><strong>Network Tab:</strong> Verify API calls are being made to /api/admin/advertiser-applications</li>
+            </ol>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔍 Common Issues & Solutions</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <h4>❌ Possible Issues:</h4>
+                    <ul>
+                        <li>JavaScript errors in console</li>
+                        <li>API not being called</li>
+                        <li>Authentication token missing</li>
+                        <li>React state not updating</li>
+                        <li>Tab click handler not working</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>✅ Solutions:</h4>
+                    <ul>
+                        <li>Check browser console for errors</li>
+                        <li>Refresh the page</li>
+                        <li>Re-login as admin</li>
+                        <li>Clear browser cache</li>
+                        <li>Check network requests</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let applicationsData = null;
+
+        async function testAPI() {
+            console.log('🧪 Testing API...');
+            const statusDiv = document.getElementById('systemStatus');
+            
+            try {
+                const response = await fetch('/api/admin/advertiser-applications');
+                const data = await response.json();
+                
+                if (data.success) {
+                    applicationsData = data.applications;
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            ✅ API Working<br>
+                            📊 Found ${data.applications.length} applications<br>
+                            ⏳ Pending: ${data.applications.filter(app => app.status === 'pending').length}<br>
+                            ✅ Approved: ${data.applications.filter(app => app.status === 'approved').length}
+                        </div>
+                    `;
+                    displayApplications(data.applications);
+                } else {
+                    statusDiv.innerHTML = `<div class="error">❌ API Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">🚨 Network Error: ${error.message}</div>`;
+            }
+        }
+
+        function testAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const statusDiv = document.getElementById('systemStatus');
+            
+            if (token && user) {
+                const userData = JSON.parse(user);
+                statusDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Authentication OK<br>
+                        👤 User: ${userData.username}<br>
+                        🔑 Role: ${userData.role}<br>
+                        🎫 Token: ${token ? 'Present' : 'Missing'}
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Not Authenticated<br>
+                        Please login as admin first
+                    </div>
+                `;
+            }
+        }
+
+        function simulateAdminView() {
+            if (!applicationsData) {
+                alert('Please test API first to load applications data');
+                return;
+            }
+            
+            const displayDiv = document.getElementById('applicationsDisplay');
+            displayDiv.innerHTML = `
+                <h4>🎭 Simulated Admin Dashboard View</h4>
+                <p>This is how the applications should appear in the admin dashboard:</p>
+                ${applicationsData.map(app => `
+                    <div class="application-card status-${app.status}">
+                        <h5>${app.business_name}</h5>
+                        <p><strong>Owner:</strong> ${app.full_name}</p>
+                        <p><strong>Email:</strong> ${app.email}</p>
+                        <p><strong>Status:</strong> <span style="font-weight: bold; color: ${
+                            app.status === 'pending' ? '#ffc107' :
+                            app.status === 'approved' ? '#28a745' : '#dc3545'
+                        }">${app.status.toUpperCase()}</span></p>
+                        <p><strong>Created:</strong> ${new Date(app.created_at).toLocaleDateString()}</p>
+                        ${app.status === 'pending' ? `
+                            <button class="btn btn-success" onclick="alert('Would approve application ${app.id}')">✅ Approve</button>
+                            <button class="btn btn-danger" onclick="alert('Would reject application ${app.id}')">❌ Reject</button>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function displayApplications(applications) {
+            const displayDiv = document.getElementById('applicationsDisplay');
+            
+            if (applications.length === 0) {
+                displayDiv.innerHTML = '<p>No advertiser applications found.</p>';
+                return;
+            }
+            
+            displayDiv.innerHTML = `
+                <h4>📊 Applications Data (${applications.length} total)</h4>
+                ${applications.map((app, index) => `
+                    <div class="application-card status-${app.status}">
+                        <strong>${index + 1}. ${app.business_name}</strong><br>
+                        Owner: ${app.full_name}<br>
+                        Status: ${app.status}<br>
+                        Created: ${app.created_at}
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            console.log('🔍 Admin Dashboard Debug Tool Loaded');
+            testAPI();
+            testAuth();
+        };
+    </script>
+</body>
+</html>

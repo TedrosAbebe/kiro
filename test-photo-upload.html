@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Upload Test - Tag Bridge Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .success {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .info {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .btn {
+            background-color: #059669;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #047857;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 Photo Upload Functionality Test</h1>
+            <p>Tag Bridge Home - Property Listing System</p>
+        </div>
+
+        <div class="test-section info">
+            <h3>🎯 Test Objectives</h3>
+            <ul>
+                <li>✅ Photo upload component loads correctly</li>
+                <li>✅ Drag and drop functionality works</li>
+                <li>✅ File validation (type, size) works</li>
+                <li>✅ Image preview displays properly</li>
+                <li>✅ Images are saved to property listings</li>
+                <li>✅ Images display in property cards and details</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 Test Links</h3>
+            <p>Click the buttons below to test photo upload functionality:</p>
+            
+            <button class="btn" onclick="window.open('/broker/add-listing', '_blank')">
+                🏢 Test Broker Add Listing (with Photos)
+            </button>
+            
+            <button class="btn" onclick="window.open('/submit-property', '_blank')">
+                🏠 Test Guest Property Submission (with Photos)
+            </button>
+            
+            <button class="btn btn-secondary" onclick="window.open('/', '_blank')">
+                🏡 View Homepage (see uploaded photos)
+            </button>
+            
+            <button class="btn btn-secondary" onclick="window.open('/admin-working', '_blank')">
+                ⚙️ Admin Dashboard (manage properties with photos)
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Testing Instructions</h3>
+            <ol>
+                <li><strong>Broker Photo Upload Test:</strong>
+                    <ul>
+                        <li>Login as a broker (create broker account if needed)</li>
+                        <li>Go to "Add Listing" page</li>
+                        <li>Fill out property details</li>
+                        <li>Test photo upload component:
+                            <ul>
+                                <li>Click to upload photos</li>
+                                <li>Drag and drop photos</li>
+                                <li>Try uploading multiple photos (up to 10)</li>
+                                <li>Test file validation (try non-image files)</li>
+                                <li>Test size validation (try large files)</li>
+                            </ul>
+                        </li>
+                        <li>Submit the listing and verify photos are saved</li>
+                    </ul>
+                </li>
+                
+                <li><strong>Guest Photo Upload Test:</strong>
+                    <ul>
+                        <li>Go to "Submit Property" page (no login required)</li>
+                        <li>Fill out guest and property information</li>
+                        <li>Test photo upload in the beautiful form</li>
+                        <li>Submit and verify photos are included</li>
+                    </ul>
+                </li>
+                
+                <li><strong>Photo Display Test:</strong>
+                    <ul>
+                        <li>Check homepage for properties with uploaded photos</li>
+                        <li>Verify image carousel works in property cards</li>
+                        <li>Click "View Details" to see full image gallery</li>
+                        <li>Test image navigation (prev/next buttons)</li>
+                    </ul>
+                </li>
+                
+                <li><strong>Admin Photo Management:</strong>
+                    <ul>
+                        <li>Login as admin (tedayeerasu / 494841Abc)</li>
+                        <li>View pending properties with photos</li>
+                        <li>Approve properties and verify photos display correctly</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Technical Features Implemented</h3>
+            <ul>
+                <li>✅ <strong>PhotoUpload Component:</strong> Reusable React component with drag & drop</li>
+                <li>✅ <strong>File Validation:</strong> Image type and 5MB size limit</li>
+                <li>✅ <strong>Base64 Encoding:</strong> Images stored as base64 strings in database</li>
+                <li>✅ <strong>Image Preview:</strong> Thumbnail grid with remove functionality</li>
+                <li>✅ <strong>Primary Photo:</strong> First uploaded image marked as primary</li>
+                <li>✅ <strong>Database Schema:</strong> Images column added to properties tables</li>
+                <li>✅ <strong>API Integration:</strong> All property APIs updated to handle images</li>
+                <li>✅ <strong>Image Carousel:</strong> Property cards and details show image galleries</li>
+                <li>✅ <strong>Placeholder API:</strong> SVG placeholders for properties without photos</li>
+            </ul>
+        </div>
+
+        <div class="test-section success">
+            <h3>✅ Expected Results</h3>
+            <p>After testing, you should see:</p>
+            <ul>
+                <li>Smooth photo upload experience with drag & drop</li>
+                <li>Image previews in upload component</li>
+                <li>Photos saved and displayed in property listings</li>
+                <li>Image carousels working on homepage and property details</li>
+                <li>Admin can see and manage properties with photos</li>
+                <li>Mobile-friendly photo upload and viewing</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Mobile Testing</h3>
+            <p>Don't forget to test on mobile devices:</p>
+            <ul>
+                <li>Photo upload from camera or gallery</li>
+                <li>Touch gestures for image navigation</li>
+                <li>Responsive image display</li>
+                <li>Mobile-optimized upload interface</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive feedback
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📸 Photo Upload Test Page Loaded');
+            console.log('🎯 Ready to test Tag Bridge Home photo functionality!');
+        });
+    </script>
+</body>
+</html>

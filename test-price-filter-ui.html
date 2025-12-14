@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Price Filter UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .filters { background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .filter-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-group { flex: 1; min-width: 200px; }
+        .filter-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .filter-group select, .filter-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .property { border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: white; }
+        .price { font-size: 18px; font-weight: bold; color: #059669; }
+        .location { color: #666; margin: 5px 0; }
+        .type { background: #e5e7eb; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+        .loading { text-align: center; padding: 40px; }
+        .stats { background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .active-filters { background: #fef3c7; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .filter-tag { background: #3b82f6; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin: 2px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Ethiopian Home Broker - Price Filter Test</h1>
+        
+        <div class="filters">
+            <h3>🔍 Search & Filter Properties</h3>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Search Properties:</label>
+                    <input type="text" id="searchInput" placeholder="Search by title or area...">
+                </div>
+                
+                <div class="filter-group">
+                    <label>City:</label>
+                    <select id="citySelect">
+                        <option value="">All Cities</option>
+                        <option value="Addis Ababa">Addis Ababa</option>
+                        <option value="Dire Dawa">Dire Dawa</option>
+                        <option value="Bahir Dar">Bahir Dar</option>
+                        <option value="Hawassa">Hawassa</option>
+                        <option value="Mekelle">Mekelle</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Property Type:</label>
+                    <select id="typeSelect">
+                        <option value="">All Types</option>
+                        <option value="house">Houses</option>
+                        <option value="apartment">Apartments</option>
+                        <option value="land">Land</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Price Range:</label>
+                    <select id="priceSelect">
+                        <option value="">Any Price</option>
+                        <optgroup label="Rental Prices (Monthly)">
+                            <option value="0-5000">< 5,000 ETB (Rent)</option>
+                            <option value="5000-10000">5,000 - 10,000 ETB (Rent)</option>
+                            <option value="10000-20000">10,000 - 20,000 ETB (Rent)</option>
+                            <option value="20000-30000">20,000 - 30,000 ETB (Rent)</option>
+                            <option value="30000-50000">30,000 - 50,000 ETB (Rent)</option>
+                        </optgroup>
+                        <optgroup label="Sale Prices">
+                            <option value="100000-500000">100K - 500K ETB (Sale)</option>
+                            <option value="500000-1000000">500K - 1M ETB (Sale)</option>
+                            <option value="1000000-2000000">1M - 2M ETB (Sale)</option>
+                            <option value="2000000-5000000">2M - 5M ETB (Sale)</option>
+                            <option value="5000000-10000000">5M - 10M ETB (Sale)</option>
+                            <option value="10000000+">10M+ ETB (Sale)</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <button onclick="applyFilters()" style="background: #059669; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+                    🔍 Apply Filters
+                </button>
+                <button onclick="clearFilters()" style="background: #dc2626; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+                    🗑️ Clear All
+                </button>
+            </div>
+        </div>
+        
+        <div id="activeFilters" class="active-filters" style="display: none;">
+            <strong>Active Filters:</strong>
+            <div id="filterTags"></div>
+        </div>
+        
+        <div id="stats" class="stats">
+            <strong>📊 Results:</strong> <span id="resultCount">Loading...</span>
+        </div>
+        
+        <div id="propertiesContainer">
+            <div class="loading">Loading properties...</div>
+        </div>
+    </div>
+
+    <script>
+        let allProperties = [];
+        
+        async function loadProperties() {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const city = document.getElementById('citySelect').value;
+                const type = document.getElementById('typeSelect').value;
+                const priceRange = document.getElementById('priceSelect').value;
+                
+                // Build query parameters
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (city) params.append('city', city);
+                if (type) params.append('type', type);
+                
+                // Handle price range
+                if (priceRange) {
+                    if (priceRange.includes('+')) {
+                        const minPrice = priceRange.replace('+', '');
+                        params.append('minPrice', minPrice);
+                    } else if (priceRange.includes('-')) {
+                        const [min, max] = priceRange.split('-');
+                        params.append('minPrice', min);
+                        params.append('maxPrice', max);
+                    }
+                }
+                
+                const queryString = params.toString();
+                const url = `/api/properties-public${queryString ? '?' + queryString : ''}`;
+                
+                console.log('Fetching:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.properties) {
+                    allProperties = data.properties;
+                    displayProperties(data.properties);
+                    updateStats(data.properties);
+                    updateActiveFilters();
+                } else {
+                    document.getElementById('propertiesContainer').innerHTML = 
+                        '<div class="loading">❌ Error loading properties: ' + (data.error || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('propertiesContainer').innerHTML = 
+                    '<div class="loading">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function displayProperties(properties) {
+            if (properties.length === 0) {
+                document.getElementById('propertiesContainer').innerHTML = 
+                    '<div class="loading">🏠 No properties found matching your criteria</div>';
+                return;
+            }
+            
+            let html = '<div class="property-grid">';
+            
+            properties.forEach(property => {
+                html += `
+                    <div class="property">
+                        <h3>${property.title}</h3>
+                        <div class="price">${new Intl.NumberFormat().format(property.price)} ETB</div>
+                        <div class="location">📍 ${property.area}, ${property.city}</div>
+                        <div class="type">${property.type}</div>
+                        <div style="margin-top: 10px;">
+                            <strong>Size:</strong> ${property.size} m² <br>
+                            <strong>Owner:</strong> ${property.owner_name || 'Unknown'} <br>
+                            <strong>Contact:</strong> ${property.phone_number}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button onclick="viewDetails('${property.id}')" style="background: #3b82f6; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                                👁️ View Details
+                            </button>
+                            <button onclick="contactBroker('${property.whatsapp_number}', '${property.title}')" style="background: #25d366; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">
+                                💬 WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            document.getElementById('propertiesContainer').innerHTML = html;
+        }
+        
+        function updateStats(properties) {
+            const count = properties.length;
+            const totalValue = properties.reduce((sum, prop) => sum + prop.price, 0);
+            const avgPrice = count > 0 ? totalValue / count : 0;
+            
+            document.getElementById('resultCount').innerHTML = `
+                ${count} properties found | 
+                Average Price: ${new Intl.NumberFormat().format(avgPrice)} ETB
+            `;
+        }
+        
+        function updateActiveFilters() {
+            const search = document.getElementById('searchInput').value;
+            const city = document.getElementById('citySelect').value;
+            const type = document.getElementById('typeSelect').value;
+            const priceRange = document.getElementById('priceSelect').value;
+            
+            const activeFilters = [];
+            if (search) activeFilters.push(`Search: "${search}"`);
+            if (city) activeFilters.push(`City: ${city}`);
+            if (type) activeFilters.push(`Type: ${type}`);
+            if (priceRange) {
+                const priceText = document.getElementById('priceSelect').selectedOptions[0].text;
+                activeFilters.push(`Price: ${priceText}`);
+            }
+            
+            if (activeFilters.length > 0) {
+                document.getElementById('activeFilters').style.display = 'block';
+                document.getElementById('filterTags').innerHTML = 
+                    activeFilters.map(filter => `<span class="filter-tag">${filter}</span>`).join(' ');
+            } else {
+                document.getElementById('activeFilters').style.display = 'none';
+            }
+        }
+        
+        function applyFilters() {
+            loadProperties();
+        }
+        
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('citySelect').value = '';
+            document.getElementById('typeSelect').value = '';
+            document.getElementById('priceSelect').value = '';
+            loadProperties();
+        }
+        
+        function viewDetails(propertyId) {
+            window.open(`/property/${propertyId}`, '_blank');
+        }
+        
+        function contactBroker(whatsappNumber, title) {
+            const cleanNumber = whatsappNumber.replace(/[\+\s-]/g, '');
+            const message = encodeURIComponent(`Hello, I'm interested in the property: ${title}. Can you provide more details?`);
+            window.open(`https://wa.me/${cleanNumber}?text=${message}`, '_blank');
+        }
+        
+        // Load properties when page loads
+        loadProperties();
+        
+        // Add event listeners for real-time filtering
+        document.getElementById('searchInput').addEventListener('input', () => {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(loadProperties, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Data Debug - Tag Bridge Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .property-debug {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+        .success {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .warning {
+            border-color: #f59e0b;
+            background-color: #fffbeb;
+        }
+        pre {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .image-test {
+            width: 200px;
+            height: 150px;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            background: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-test img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Frontend Data Debug</h1>
+        <p>Debugging what data the frontend is actually receiving from the API</p>
+        
+        <div id="status">Loading...</div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function debugFrontendData() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                statusDiv.textContent = 'Fetching data from /api/properties-working...';
+                
+                const response = await fetch('/api/properties-working');
+                const data = await response.json();
+                
+                console.log('🔍 Raw API Response:', data);
+                
+                if (!data.success) {
+                    throw new Error('API returned error: ' + (data.error || 'Unknown error'));
+                }
+                
+                statusDiv.innerHTML = `✅ API Success - Found ${data.properties?.length || 0} properties`;
+                
+                if (!data.properties || data.properties.length === 0) {
+                    resultsDiv.innerHTML = '<div class="error">No properties found in API response</div>';
+                    return;
+                }
+                
+                // Debug each property
+                data.properties.forEach((property, index) => {
+                    console.log(`🏠 Property ${index + 1}:`, property);
+                    
+                    const propertyDiv = document.createElement('div');
+                    propertyDiv.className = 'property-debug';
+                    
+                    const hasImages = property.images && Array.isArray(property.images) && property.images.length > 0;
+                    const firstImage = hasImages ? property.images[0] : null;
+                    const isBase64 = firstImage && firstImage.startsWith('data:');
+                    const isPlaceholder = firstImage && firstImage.includes('placeholder');
+                    
+                    // Determine status
+                    let statusClass = 'warning';
+                    let statusText = 'No Images';
+                    
+                    if (hasImages) {
+                        if (isPlaceholder) {
+                            statusClass = 'warning';
+                            statusText = 'Placeholder Image';
+                        } else if (isBase64) {
+                            statusClass = 'success';
+                            statusText = 'Base64 Image Found';
+                        } else {
+                            statusClass = 'success';
+                            statusText = 'URL Image Found';
+                        }
+                    } else {
+                        statusClass = 'error';
+                        statusText = 'No Images Array';
+                    }
+                    
+                    propertyDiv.className += ' ' + statusClass;
+                    
+                    propertyDiv.innerHTML = `
+                        <h3>${property.title} - ${statusText}</h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <h4>Property Data:</h4>
+                                <p><strong>ID:</strong> ${property.id}</p>
+                                <p><strong>Images Array:</strong> ${hasImages ? 'EXISTS' : 'MISSING'}</p>
+                                <p><strong>Images Count:</strong> ${property.images?.length || 0}</p>
+                                <p><strong>Image Type:</strong> ${
+                                    !hasImages ? 'None' :
+                                    isPlaceholder ? 'Placeholder' :
+                                    isBase64 ? 'Base64' : 'URL'
+                                }</p>
+                                
+                                ${hasImages ? `
+                                    <h4>First Image Preview:</h4>
+                                    <pre>${firstImage.substring(0, 200)}${firstImage.length > 200 ? '...' : ''}</pre>
+                                ` : ''}
+                            </div>
+                            
+                            <div>
+                                ${hasImages && !isPlaceholder ? `
+                                    <h4>Image Test:</h4>
+                                    <div class="image-test">
+                                        <img src="${firstImage}" 
+                                             alt="${property.title}"
+                                             onload="console.log('✅ Image loaded for ${property.title}')"
+                                             onerror="console.error('❌ Image failed for ${property.title}'); this.style.display='none'; this.parentElement.innerHTML='❌ Failed to load';">
+                                    </div>
+                                ` : `
+                                    <div class="image-test">
+                                        <span style="color: #666;">No image to test</span>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                        
+                        <details style="margin-top: 15px;">
+                            <summary>Full Property Object</summary>
+                            <pre>${JSON.stringify(property, null, 2)}</pre>
+                        </details>
+                    `;
+                    
+                    resultsDiv.appendChild(propertyDiv);
+                });
+                
+                // Summary
+                const propertiesWithRealImages = data.properties.filter(p => 
+                    p.images && p.images.length > 0 && !p.images[0].includes('placeholder')
+                );
+                
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'property-debug ' + (propertiesWithRealImages.length > 0 ? 'success' : 'error');
+                summaryDiv.innerHTML = `
+                    <h3>📊 Summary</h3>
+                    <p><strong>Total Properties:</strong> ${data.properties.length}</p>
+                    <p><strong>Properties with Real Images:</strong> ${propertiesWithRealImages.length}</p>
+                    <p><strong>Properties with Placeholders:</strong> ${data.properties.filter(p => p.images && p.images[0] && p.images[0].includes('placeholder')).length}</p>
+                    <p><strong>Properties with No Images:</strong> ${data.properties.filter(p => !p.images || p.images.length === 0).length}</p>
+                `;
+                resultsDiv.appendChild(summaryDiv);
+                
+            } catch (error) {
+                console.error('❌ Debug Error:', error);
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+                resultsDiv.innerHTML = `<div class="error">Debug failed: ${error.message}</div>`;
+            }
+        }
+        
+        // Run debug when page loads
+        document.addEventListener('DOMContentLoaded', debugFrontendData);
+    </script>
+</body>
+</html>

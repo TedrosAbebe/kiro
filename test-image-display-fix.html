@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Display Fix Test - Tag Bridge Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .success {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .info {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .image-test {
+            width: 200px;
+            height: 150px;
+            border: 1px solid #ccc;
+            margin: 10px;
+            display: inline-block;
+            background: #f9f9f9;
+        }
+        .image-test img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .btn {
+            background-color: #059669;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #047857;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Image Display Fix Test</h1>
+        <p>Testing the fix for base64 images in PropertyCard component</p>
+
+        <div class="test-section info">
+            <h3>🎯 What Was Fixed</h3>
+            <ul>
+                <li>✅ Next.js Image component doesn't support base64 images by default</li>
+                <li>✅ Modified PropertyCard to use regular &lt;img&gt; tag for base64 images</li>
+                <li>✅ Modified property details page to handle base64 images</li>
+                <li>✅ API is correctly returning base64 image data</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Base64 Image Test</h3>
+            <p>Testing if base64 images display correctly:</p>
+            
+            <div class="image-test">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNGY4MWJkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5UZXN0IEltYWdlPC90ZXh0Pjwvc3ZnPg==" 
+                     alt="Test Base64 Image"
+                     onload="document.getElementById('base64-status').textContent = '✅ Base64 image loaded successfully!'; document.getElementById('base64-status').className = 'success';"
+                     onerror="document.getElementById('base64-status').textContent = '❌ Base64 image failed to load'; document.getElementById('base64-status').className = 'error';">
+            </div>
+            
+            <div id="base64-status" class="info">Loading base64 image...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🏠 Homepage Test</h3>
+            <p>Now test the actual homepage:</p>
+            
+            <button class="btn" onclick="window.open('/', '_blank')">
+                🏡 Open Homepage
+            </button>
+            
+            <button class="btn" onclick="window.open('/test-frontend-images.html', '_blank')">
+                🔍 Open Frontend Image Test
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Expected Results</h3>
+            <p>After the fix, you should see:</p>
+            <ul>
+                <li>✅ Properties with uploaded photos showing actual images instead of placeholders</li>
+                <li>✅ "Beautiful House with Photo Gallery" showing 3 test images</li>
+                <li>✅ "what" property showing the uploaded photo</li>
+                <li>✅ Image carousels working properly</li>
+                <li>✅ No console errors related to image loading</li>
+            </ul>
+        </div>
+
+        <div class="test-section success">
+            <h3>🎉 Success Indicators</h3>
+            <p>If the fix worked, you'll see:</p>
+            <ul>
+                <li>Real property photos instead of house icons</li>
+                <li>Image navigation arrows on properties with multiple photos</li>
+                <li>Smooth image loading without errors</li>
+                <li>Base64 images displaying correctly in both property cards and detail pages</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Technical Details</h3>
+            <p><strong>Problem:</strong> Next.js Image component requires special configuration for base64 images</p>
+            <p><strong>Solution:</strong> Use conditional rendering - regular &lt;img&gt; for base64, Next.js Image for URLs</p>
+            <p><strong>Code Change:</strong></p>
+            <pre style="background: #f3f4f6; padding: 10px; border-radius: 5px; overflow-x: auto;">
+{property.images[currentImageIndex].startsWith('data:') ? (
+  &lt;img src={property.images[currentImageIndex]} className="w-full h-full object-cover" /&gt;
+) : (
+  &lt;Image src={property.images[currentImageIndex]} fill className="object-cover" /&gt;
+)}
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔧 Image Display Fix Test Page Loaded');
+        console.log('📸 Testing base64 image support...');
+        
+        // Test base64 image creation
+        const testCanvas = document.createElement('canvas');
+        testCanvas.width = 100;
+        testCanvas.height = 100;
+        const ctx = testCanvas.getContext('2d');
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(0, 0, 100, 100);
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Test', 50, 55);
+        
+        const testBase64 = testCanvas.toDataURL();
+        console.log('✅ Generated test base64 image:', testBase64.substring(0, 50) + '...');
+    </script>
+</body>
+</html>

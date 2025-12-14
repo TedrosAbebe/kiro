@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Login Flow</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; width: 200px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Admin Login Flow Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Test Admin Login API</h3>
+        <button onclick="testLoginAPI()">Test Login API</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Manual Login Test</h3>
+        <div>
+            <input type="text" id="username" placeholder="Username" value="tedayeerasu">
+            <input type="password" id="password" placeholder="Password" value="494841Abc">
+            <button onclick="manualLogin()">Login</button>
+        </div>
+        <div id="manualResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Check Database Status</h3>
+        <button onclick="checkDatabase()">Check Database</button>
+        <div id="databaseResult"></div>
+    </div>
+
+    <script>
+        async function testLoginAPI() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>🔄 Testing login API...</p>';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'tedayeerasu',
+                        password: '494841Abc'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Login API Success!</h4>
+                            <p><strong>User:</strong> ${data.user.username}</p>
+                            <p><strong>Role:</strong> ${data.user.role}</p>
+                            <p><strong>Token:</strong> ${data.token ? 'Generated' : 'Missing'}</p>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Login API Failed</h4>
+                            <p><strong>Error:</strong> ${data.message || data.error}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Network Error</h4>
+                        <p>${error.message}</p>
+                        <p>Make sure the Next.js server is running with: <code>npm run dev</code></p>
+                    </div>
+                `;
+            }
+        }
+
+        async function manualLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('manualResult');
+            
+            resultDiv.innerHTML = '<p>🔄 Attempting login...</p>';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store token like the real app does
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Manual Login Success!</h4>
+                            <p>Token stored in localStorage</p>
+                            <p>You can now navigate to: <a href="/admin-working" target="_blank">/admin-working</a></p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Manual Login Failed</h4>
+                            <p>${data.message || data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function checkDatabase() {
+            const resultDiv = document.getElementById('databaseResult');
+            resultDiv.innerHTML = '<p>🔄 Checking database status...</p>';
+            
+            // This would need a special API endpoint to check database
+            resultDiv.innerHTML = `
+                <div>
+                    <h4>📊 Database Status</h4>
+                    <p>To check database status, run in terminal:</p>
+                    <pre>node test-secure-admin-system.js</pre>
+                    <p>Expected results:</p>
+                    <ul>
+                        <li>✅ 1 admin account (tedayeerasu)</li>
+                        <li>✅ Password verification working</li>
+                        <li>✅ No test accounts remaining</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Auto-run the login test on page load
+        window.onload = function() {
+            testLoginAPI();
+        };
+    </script>
+</body>
+</html>

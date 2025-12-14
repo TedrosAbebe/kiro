@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Login API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; }
+        .container { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; width: 250px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .step { margin: 20px 0; padding: 15px; border-left: 4px solid #007bff; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Admin Login API Test</h1>
+    
+    <div class="info">
+        <h3>📋 Test Instructions:</h3>
+        <p>This tool will test the admin login API directly to help debug the issue.</p>
+        <p><strong>Make sure your server is running:</strong> <code>npm run dev</code></p>
+    </div>
+
+    <div class="step">
+        <h3>Step 1: Test Admin Credentials</h3>
+        <input type="email" id="email" value="tedayeerasu@gmail.com" placeholder="Admin Email">
+        <input type="password" id="password" value="admin123" placeholder="Password">
+        <button onclick="testCredentials()">🔐 Test Credentials</button>
+        <div id="credentialsResult"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Test OTP Verification</h3>
+        <input type="text" id="otpCode" placeholder="Enter OTP from server console" maxlength="6">
+        <button onclick="testOTP()">🔢 Test OTP</button>
+        <div id="otpResult"></div>
+    </div>
+
+    <div class="container">
+        <h3>📊 Console Logs:</h3>
+        <pre id="logs">Waiting for test results...</pre>
+    </div>
+
+    <script>
+        let currentEmail = '';
+        const logsElement = document.getElementById('logs');
+        let logMessages = [];
+
+        function addLog(message) {
+            logMessages.push(`[${new Date().toLocaleTimeString()}] ${message}`);
+            logsElement.textContent = logMessages.join('\n');
+        }
+
+        async function testCredentials() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('credentialsResult');
+            
+            currentEmail = email;
+            
+            addLog(`🔐 Testing admin credentials for: ${email}`);
+            resultDiv.innerHTML = '<div class="info">⏳ Testing credentials...</div>';
+            
+            try {
+                const response = await fetch('/api/auth/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        step: 'credentials'
+                    })
+                });
+                
+                addLog(`📡 Response status: ${response.status}`);
+                
+                const result = await response.json();
+                addLog(`📡 Response data: ${JSON.stringify(result, null, 2)}`);
+                
+                if (result.success && result.requiresOTP) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Credentials verified! OTP sent to email.
+                            <br><strong>Check your server console for the OTP code.</strong>
+                        </div>
+                    `;
+                    addLog('✅ Credentials verified successfully! Check server console for OTP.');
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Credentials failed: ${result.message || 'Unknown error'}
+                        </div>
+                    `;
+                    addLog(`❌ Credentials failed: ${result.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                addLog(`❌ Network error: ${error.message}`);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Network Error: ${error.message}
+                        <br>Make sure your server is running on http://localhost:3000
+                    </div>
+                `;
+            }
+        }
+
+        async function testOTP() {
+            const otpCode = document.getElementById('otpCode').value;
+            const resultDiv = document.getElementById('otpResult');
+            
+            if (!currentEmail) {
+                resultDiv.innerHTML = '<div class="error">❌ Please test credentials first!</div>';
+                return;
+            }
+            
+            if (!otpCode || otpCode.length !== 6) {
+                resultDiv.innerHTML = '<div class="error">❌ Please enter a 6-digit OTP code</div>';
+                return;
+            }
+            
+            addLog(`🔢 Testing OTP: ${otpCode} for email: ${currentEmail}`);
+            resultDiv.innerHTML = '<div class="info">⏳ Verifying OTP...</div>';
+            
+            try {
+                const response = await fetch('/api/auth/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: currentEmail,
+                        otpCode: otpCode,
+                        step: 'otp'
+                    })
+                });
+                
+                addLog(`📡 OTP Response status: ${response.status}`);
+                
+                const result = await response.json();
+                addLog(`📡 OTP Response data: ${JSON.stringify(result, null, 2)}`);
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Admin login successful!
+                            <br><strong>User:</strong> ${result.user.name}
+                            <br><strong>Role:</strong> ${result.user.role}
+                            <br><strong>Token:</strong> Generated ✅
+                        </div>
+                    `;
+                    addLog('✅ Admin login completed successfully!');
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ OTP verification failed: ${result.error || 'Unknown error'}
+                        </div>
+                    `;
+                    addLog(`❌ OTP verification failed: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                addLog(`❌ OTP Network error: ${error.message}`);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Network Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        addLog('🧪 Admin Login API Test Tool loaded');
+        addLog('💡 Make sure your server is running: npm run dev');
+        addLog('📧 Default credentials: tedayeerasu@gmail.com / admin123');
+    </script>
+</body>
+</html>

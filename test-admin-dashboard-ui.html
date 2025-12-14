@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard UI Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+        .warning { color: #f59e0b; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { 
+            background: #9ca3af; 
+            cursor: not-allowed; 
+        }
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin: 5px;
+        }
+        .user-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9fafb;
+        }
+        .admin-card { border-left: 4px solid #ef4444; }
+        .broker-card { border-left: 4px solid #3b82f6; }
+        .user-card-regular { border-left: 4px solid #10b981; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Admin Dashboard UI Test</h1>
+    <p>Testing the enhanced user management system functionality</p>
+
+    <div class="test-section">
+        <h2>🔐 Authentication</h2>
+        <div id="auth-status">Not authenticated</div>
+        <button onclick="login()">Login as Admin</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 User Statistics</h2>
+        <div id="user-stats" class="stats">
+            <div class="stat-card">
+                <h3>🛡️ Admins</h3>
+                <div id="admin-count">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>👨‍💼 Brokers</h3>
+                <div id="broker-count">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>👤 Users</h3>
+                <div id="user-count">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>📈 Total</h3>
+                <div id="total-count">-</div>
+            </div>
+        </div>
+        <button onclick="loadUserStats()">Refresh Stats</button>
+    </div>
+
+    <div class="test-section">
+        <h2>➕ Create New User</h2>
+        <div>
+            <input type="text" id="new-username" placeholder="Username" />
+            <input type="password" id="new-password" placeholder="Password" />
+            <select id="new-role">
+                <option value="user">👤 Regular User</option>
+                <option value="broker">👨‍💼 Broker</option>
+                <option value="admin">🛡️ Admin</option>
+            </select>
+            <button onclick="createUser()">Create User</button>
+        </div>
+        <div id="create-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🛡️ Admin Users</h2>
+        <div id="admin-users"></div>
+        <button onclick="loadUsers()">Refresh Admin List</button>
+    </div>
+
+    <div class="test-section">
+        <h2>👨‍💼 Broker Users</h2>
+        <div id="broker-users"></div>
+        <button onclick="loadUsers()">Refresh Broker List</button>
+    </div>
+
+    <div class="test-section">
+        <h2>👤 Regular Users</h2>
+        <div id="regular-users"></div>
+        <button onclick="loadUsers()">Refresh User List</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Operations</h2>
+        <button onclick="runFullTest()">Run Complete Test Suite</button>
+        <button onclick="clearTestData()">Clean Test Data</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let allUsers = [];
+
+        async function login() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'tedayeerasu',
+                        password: '494841Abc'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    document.getElementById('auth-status').innerHTML = 
+                        '<span class="success">✅ Authenticated as admin</span>';
+                    loadUserStats();
+                    loadUsers();
+                } else {
+                    document.getElementById('auth-status').innerHTML = 
+                        '<span class="error">❌ Login failed: ' + data.error + '</span>';
+                }
+            } catch (error) {
+                document.getElementById('auth-status').innerHTML = 
+                    '<span class="error">❌ Login error: ' + error.message + '</span>';
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            document.getElementById('auth-status').innerHTML = 'Not authenticated';
+            clearUserDisplay();
+        }
+
+        async function loadUserStats() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    allUsers = data.users;
+                    const stats = data.stats;
+                    
+                    document.getElementById('admin-count').textContent = stats.admin || 0;
+                    document.getElementById('broker-count').textContent = stats.broker || 0;
+                    document.getElementById('user-count').textContent = stats.user || 0;
+                    document.getElementById('total-count').textContent = data.users.length;
+                } else {
+                    console.error('Failed to load stats:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadUsers() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            await loadUserStats();
+            displayUsers();
+        }
+
+        function displayUsers() {
+            const adminUsers = allUsers.filter(u => u.role === 'admin');
+            const brokerUsers = allUsers.filter(u => u.role === 'broker');
+            const regularUsers = allUsers.filter(u => u.role === 'user');
+
+            // Display admin users
+            const adminContainer = document.getElementById('admin-users');
+            adminContainer.innerHTML = adminUsers.length === 0 ? 
+                '<p class="info">No admin users found</p>' :
+                adminUsers.map(user => createUserCard(user, 'admin')).join('');
+
+            // Display broker users
+            const brokerContainer = document.getElementById('broker-users');
+            brokerContainer.innerHTML = brokerUsers.length === 0 ? 
+                '<p class="info">No broker users found</p>' :
+                brokerUsers.map(user => createUserCard(user, 'broker')).join('');
+
+            // Display regular users
+            const regularContainer = document.getElementById('regular-users');
+            regularContainer.innerHTML = regularUsers.length === 0 ? 
+                '<p class="info">No regular users found</p>' :
+                regularUsers.map(user => createUserCard(user, 'user')).join('');
+        }
+
+        function createUserCard(user, type) {
+            const isProtected = user.username === 'tedayeerasu';
+            const cardClass = type === 'admin' ? 'admin-card' : 
+                             type === 'broker' ? 'broker-card' : 'user-card-regular';
+            
+            return `
+                <div class="user-card ${cardClass}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4>${user.username}</h4>
+                            <p>Role: ${user.role} | Created: ${new Date(user.created_at).toLocaleDateString()}</p>
+                            <p>ID: ${user.id.substring(0, 8)}...</p>
+                        </div>
+                        <div>
+                            ${isProtected ? 
+                                '<span class="warning">🔒 Protected Account</span>' :
+                                `<button onclick="editUser('${user.id}', '${user.username}', '${user.role}')">✏️ Edit</button>
+                                 <button onclick="deleteUser('${user.username}')" style="background: #ef4444;">🗑️ Delete</button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function createUser() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            const username = document.getElementById('new-username').value;
+            const password = document.getElementById('new-password').value;
+            const role = document.getElementById('new-role').value;
+
+            if (!username || !password) {
+                alert('Please fill in username and password');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/manage-users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ username, password, role })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('create-result').innerHTML = 
+                        '<span class="success">✅ User created successfully!</span>';
+                    document.getElementById('new-username').value = '';
+                    document.getElementById('new-password').value = '';
+                    loadUsers();
+                } else {
+                    document.getElementById('create-result').innerHTML = 
+                        '<span class="error">❌ Failed to create user: ' + data.error + '</span>';
+                }
+            } catch (error) {
+                document.getElementById('create-result').innerHTML = 
+                    '<span class="error">❌ Error: ' + error.message + '</span>';
+            }
+        }
+
+        async function deleteUser(username) {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete user "${username}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/manage-users', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('User deleted successfully!');
+                    loadUsers();
+                } else {
+                    alert('Failed to delete user: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error deleting user: ' + error.message);
+            }
+        }
+
+        function editUser(userId, username, role) {
+            const newUsername = prompt('New username:', username);
+            const newRole = prompt('New role (admin/broker/user):', role);
+            const newPassword = prompt('New password (leave empty to keep current):');
+
+            if (newUsername && newRole) {
+                updateUser(userId, newUsername, newRole, newPassword);
+            }
+        }
+
+        async function updateUser(userId, username, role, password) {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                const body = { userId, username, role };
+                if (password && password.trim() !== '') {
+                    body.password = password;
+                }
+
+                const response = await fetch('/api/admin/manage-users', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('User updated successfully!');
+                    loadUsers();
+                } else {
+                    alert('Failed to update user: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error updating user: ' + error.message);
+            }
+        }
+
+        async function runFullTest() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="loading"></div> Running comprehensive test...';
+
+            let testLog = '<h3>🧪 Test Results</h3>';
+
+            try {
+                // Test 1: Create test users
+                testLog += '<p class="info">Creating test users...</p>';
+                
+                const testUsers = [
+                    { username: 'testadmin1', password: 'pass123', role: 'admin' },
+                    { username: 'testbroker1', password: 'pass123', role: 'broker' },
+                    { username: 'testuser1', password: 'pass123', role: 'user' }
+                ];
+
+                for (const user of testUsers) {
+                    const response = await fetch('/api/admin/manage-users', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify(user)
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        testLog += `<p class="success">✅ Created ${user.role}: ${user.username}</p>`;
+                    } else {
+                        testLog += `<p class="error">❌ Failed to create ${user.username}: ${data.error}</p>`;
+                    }
+                }
+
+                // Test 2: Update a user
+                testLog += '<p class="info">Testing user update...</p>';
+                const updateResponse = await fetch('/api/admin/manage-users', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        userId: allUsers.find(u => u.username === 'testbroker1')?.id,
+                        username: 'updatedbroker1',
+                        role: 'broker',
+                        password: 'newpass123'
+                    })
+                });
+
+                const updateData = await updateResponse.json();
+                if (updateData.success) {
+                    testLog += '<p class="success">✅ User update successful</p>';
+                } else {
+                    testLog += '<p class="error">❌ User update failed: ' + updateData.error + '</p>';
+                }
+
+                // Test 3: Verify user counts
+                await loadUserStats();
+                testLog += '<p class="success">✅ User statistics refreshed</p>';
+
+                testLog += '<p class="success">🎉 Test suite completed successfully!</p>';
+
+            } catch (error) {
+                testLog += '<p class="error">❌ Test failed: ' + error.message + '</p>';
+            }
+
+            results.innerHTML = testLog;
+        }
+
+        async function clearTestData() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            const testUsernames = ['testadmin1', 'testbroker1', 'testuser1', 'updatedbroker1'];
+            
+            for (const username of testUsernames) {
+                try {
+                    await fetch('/api/admin/manage-users', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ username })
+                    });
+                } catch (error) {
+                    console.log('User not found or already deleted:', username);
+                }
+            }
+
+            alert('Test data cleaned up');
+            loadUsers();
+        }
+
+        function clearUserDisplay() {
+            document.getElementById('admin-users').innerHTML = '';
+            document.getElementById('broker-users').innerHTML = '';
+            document.getElementById('regular-users').innerHTML = '';
+            document.getElementById('admin-count').textContent = '-';
+            document.getElementById('broker-count').textContent = '-';
+            document.getElementById('user-count').textContent = '-';
+            document.getElementById('total-count').textContent = '-';
+        }
+
+        // Auto-login on page load for testing
+        window.onload = function() {
+            login();
+        };
+    </script>
+</body>
+</html>

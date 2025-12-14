@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Approval</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .property { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .status { padding: 5px 10px; border-radius: 3px; color: white; }
+        .pending { background-color: orange; }
+        .approved { background-color: green; }
+        .rejected { background-color: red; }
+        button { padding: 8px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .approve { background-color: green; color: white; }
+        .reject { background-color: red; color: white; }
+        .login-form { background: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .login-form input { padding: 8px; margin: 5px; width: 200px; }
+        .login-form button { background: blue; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin Approval Test</h1>
+        
+        <div class="login-form">
+            <h3>Login as Admin</h3>
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="login()">Login</button>
+            <div id="loginStatus"></div>
+        </div>
+        
+        <div id="propertiesContainer">
+            <p>Please login first to see properties</p>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    document.getElementById('loginStatus').innerHTML = '✅ Logged in as ' + data.user.username + ' (' + data.user.role + ')';
+                    loadProperties();
+                } else {
+                    document.getElementById('loginStatus').innerHTML = '❌ Login failed: ' + data.error;
+                }
+            } catch (error) {
+                document.getElementById('loginStatus').innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+
+        async function loadProperties() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin-working/properties', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayProperties(data.properties);
+                } else {
+                    document.getElementById('propertiesContainer').innerHTML = '❌ Error loading properties: ' + data.error;
+                }
+            } catch (error) {
+                document.getElementById('propertiesContainer').innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+
+        function displayProperties(properties) {
+            let html = '<h3>Properties for Review (' + properties.length + ')</h3>';
+            
+            properties.forEach(property => {
+                html += `
+                    <div class="property">
+                        <h4>${property.title}</h4>
+                        <p><strong>Price:</strong> ${new Intl.NumberFormat().format(property.price)} ETB</p>
+                        <p><strong>Location:</strong> ${property.area}, ${property.city}</p>
+                        <p><strong>Type:</strong> ${property.type} • <strong>Size:</strong> ${property.size} m²</p>
+                        <p><strong>Owner:</strong> ${property.owner_name} (${property.owner_role})</p>
+                        <p><strong>Contact:</strong> ${property.phone_number} • WhatsApp: ${property.whatsapp_number}</p>
+                        <p><strong>Created:</strong> ${new Date(property.created_at).toLocaleString()}</p>
+                        <p><strong>Status:</strong> <span class="status ${property.status}">${property.status}</span></p>
+                        
+                        ${(property.status === 'pending' || property.status === 'pending_payment') ? `
+                            <button class="approve" onclick="updateStatus('${property.id}', 'approved')">✅ Approve</button>
+                            <button class="reject" onclick="updateStatus('${property.id}', 'rejected')">❌ Reject</button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            document.getElementById('propertiesContainer').innerHTML = html;
+        }
+
+        async function updateStatus(propertyId, status) {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+            
+            try {
+                console.log('Updating property', propertyId, 'to', status);
+                
+                const response = await fetch('/api/admin-working/properties', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({
+                        propertyId: propertyId,
+                        status: status,
+                        adminNotes: status + ' by admin test'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Update response:', data);
+                
+                if (data.success) {
+                    alert('Property ' + status + ' successfully!');
+                    loadProperties(); // Reload to see updated status
+                } else {
+                    alert('Failed to ' + status + ' property: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error updating property:', error);
+                alert('Error updating property: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

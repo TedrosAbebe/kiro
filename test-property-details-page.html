@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Property Details & Call Functionality</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .property { border: 1px solid #ddd; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        .buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
+        .btn-details { background: #3b82f6; color: white; }
+        .btn-whatsapp { background: #25d366; color: white; }
+        .btn-call { background: #ef4444; color: white; }
+        .loading { text-align: center; padding: 40px; }
+        .contact-info { background: #f3f4f6; padding: 15px; border-radius: 5px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Property Details & Call Functionality Test</h1>
+        <p>Testing property details viewing and broker contact functionality</p>
+        
+        <div id="propertiesContainer">
+            <div class="loading">Loading properties...</div>
+        </div>
+    </div>
+
+    <script>
+        function openWhatsApp(number, title) {
+            // Clean the number (remove + and any spaces)
+            const cleanNumber = number.replace(/[\+\s-]/g, '');
+            const message = encodeURIComponent(
+                `Hello, I'm interested in the property: ${title}. Can you provide more details about the location, availability, and viewing schedule?`
+            );
+            const url = `https://wa.me/${cleanNumber}?text=${message}`;
+            console.log('Opening WhatsApp:', url);
+            window.open(url, '_blank');
+        }
+
+        function makeCall(number) {
+            const url = `tel:${number}`;
+            console.log('Making call:', url);
+            window.open(url, '_self');
+        }
+
+        function viewDetails(propertyId) {
+            const url = `/property/${propertyId}`;
+            console.log('Opening property details:', url);
+            window.open(url, '_blank');
+        }
+
+        async function loadProperties() {
+            try {
+                console.log('Fetching properties...');
+                
+                const response = await fetch('/api/properties-public');
+                const data = await response.json();
+                
+                console.log('Response:', data);
+                
+                if (data.success && data.properties) {
+                    displayProperties(data.properties.slice(0, 3)); // Show first 3 properties
+                } else {
+                    document.getElementById('propertiesContainer').innerHTML = 
+                        '<div class="loading">❌ Error loading properties: ' + (data.error || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('propertiesContainer').innerHTML = 
+                    '<div class="loading">❌ Error: ' + error.message + '</div>';
+            }
+        }
+
+        function displayProperties(properties) {
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <h2>✅ Properties with Contact Functionality</h2>
+                    <p>Test the "View Details", "WhatsApp", and "Call" buttons:</p>
+                </div>
+            `;
+            
+            properties.forEach(property => {
+                html += `
+                    <div class="property">
+                        <h3>${property.title}</h3>
+                        <p><strong>Price:</strong> ${new Intl.NumberFormat().format(property.price)} ETB</p>
+                        <p><strong>Location:</strong> ${property.area}, ${property.city}</p>
+                        <p><strong>Type:</strong> ${property.type} • <strong>Size:</strong> ${property.size} m²</p>
+                        <p><strong>Status:</strong> ${property.status}</p>
+                        
+                        <div class="contact-info">
+                            <p><strong>📞 Phone:</strong> ${property.phone_number}</p>
+                            <p><strong>📱 WhatsApp:</strong> ${property.whatsapp_number}</p>
+                            <p><strong>👤 Owner:</strong> ${property.owner_name || 'Unknown'}</p>
+                        </div>
+                        
+                        <div class="buttons">
+                            <button class="btn btn-details" onclick="viewDetails('${property.id}')">
+                                👁️ View Details
+                            </button>
+                            <button class="btn btn-whatsapp" onclick="openWhatsApp('${property.whatsapp_number}', '${property.title}')">
+                                💬 WhatsApp
+                            </button>
+                            <button class="btn btn-call" onclick="makeCall('${property.phone_number}')">
+                                📞 Call Broker
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                            <strong>Test URLs:</strong><br>
+                            • Details: <a href="/property/${property.id}" target="_blank">/property/${property.id}</a><br>
+                            • WhatsApp: https://wa.me/${property.whatsapp_number.replace(/[\+\s-]/g, '')}<br>
+                            • Call: tel:${property.phone_number}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('propertiesContainer').innerHTML = html;
+        }
+
+        // Load properties when page loads
+        loadProperties();
+    </script>
+</body>
+</html>

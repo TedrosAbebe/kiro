@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Broker Deletion</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .delete-btn { background-color: #dc3545; color: white; border: none; border-radius: 3px; }
+        .test-btn { background-color: #007bff; color: white; border: none; border-radius: 3px; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Broker Deletion Fix</h1>
+    
+    <div class="section info">
+        <h3>📋 Current Broker Applications</h3>
+        <button class="test-btn" onclick="loadBrokers()">Load Brokers</button>
+        <div id="brokers-list"></div>
+    </div>
+
+    <div class="section">
+        <h3>🗑️ Test Broker Deletion</h3>
+        <p>Test the broker deletion functionality that was just fixed.</p>
+        
+        <div style="margin: 10px 0;">
+            <label>User ID: </label>
+            <input type="text" id="deleteUserId" placeholder="Enter user ID" style="padding: 5px; margin: 5px; width: 300px;">
+        </div>
+        
+        <div style="margin: 10px 0;">
+            <label>
+                <input type="checkbox" id="deleteAccount" checked> 
+                Delete user account (not just broker info)
+            </label>
+        </div>
+        
+        <button class="delete-btn" onclick="testDeleteBroker()">Test Delete Broker</button>
+        <div id="delete-result"></div>
+    </div>
+
+    <div class="section">
+        <h3>🔧 What Was Fixed</h3>
+        <ul>
+            <li>✅ Added DELETE method to broker applications API</li>
+            <li>✅ Added proper broker deletion operations</li>
+            <li>✅ Fixed TypeScript errors</li>
+            <li>✅ Added support for both individual and bulk deletion</li>
+            <li>✅ Added option to delete just broker info or entire user account</li>
+        </ul>
+    </div>
+
+    <script>
+        async function loadBrokers() {
+            try {
+                // Note: This would need proper authentication in real use
+                const response = await fetch('/api/admin/broker-applications');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayBrokers(data.applications);
+                } else {
+                    document.getElementById('brokers-list').innerHTML = 
+                        `<div class="error">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('brokers-list').innerHTML = 
+                    `<div class="error">Network Error: ${error.message}</div>`;
+            }
+        }
+
+        function displayBrokers(brokers) {
+            const container = document.getElementById('brokers-list');
+            
+            if (brokers.length === 0) {
+                container.innerHTML = '<p>No broker applications found.</p>';
+                return;
+            }
+
+            let html = '<table>';
+            html += '<tr><th>User ID</th><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>';
+            
+            brokers.forEach(broker => {
+                html += `<tr>
+                    <td><code>${broker.user_id}</code></td>
+                    <td>${broker.full_name}</td>
+                    <td>${broker.email}</td>
+                    <td>${broker.status}</td>
+                    <td>
+                        <button class="delete-btn" onclick="quickDelete('${broker.user_id}', '${broker.full_name}')">
+                            Delete
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        function quickDelete(userId, fullName) {
+            document.getElementById('deleteUserId').value = userId;
+            if (confirm(`Delete broker "${fullName}"?`)) {
+                testDeleteBroker();
+            }
+        }
+
+        async function testDeleteBroker() {
+            const userId = document.getElementById('deleteUserId').value;
+            const deleteAccount = document.getElementById('deleteAccount').checked;
+            
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
+
+            console.log('🗑️ Testing broker deletion:', { userId, deleteAccount });
+
+            try {
+                const response = await fetch('/api/admin/broker-applications', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // Note: In real use, you'd need Authorization header
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        deleteAccount: deleteAccount
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Delete response:', data);
+
+                const resultDiv = document.getElementById('delete-result');
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Deletion Successful!</h4>
+                            <p>${data.message}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    // Refresh the brokers list
+                    loadBrokers();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Deletion Failed!</h4>
+                            <p>Error: ${data.message}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                document.getElementById('delete-result').innerHTML = `
+                    <div class="error">
+                        <h4>🌐 Network Error!</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load brokers on page load
+        window.onload = function() {
+            loadBrokers();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Broker Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        .test-links { margin: 10px 0; }
+        .test-links a { display: inline-block; margin: 5px; padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Broker Access Issue</h1>
+        
+        <div class="step">
+            <h3>Step 1: Test Broker Login</h3>
+            <button onclick="testBrokerLogin()">Test Broker Login</button>
+            <div id="loginResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Check Local Storage</h3>
+            <button onclick="checkLocalStorage()">Check Local Storage</button>
+            <div id="storageResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Test Add Listing Page Access</h3>
+            <div class="test-links">
+                <a href="http://localhost:3000/broker/add-listing" target="_blank">Open Add Listing Page</a>
+                <a href="http://localhost:3000/login" target="_blank">Open Login Page</a>
+                <a href="http://localhost:3000/broker" target="_blank">Open Broker Dashboard</a>
+            </div>
+            <div class="info">
+                <p><strong>Instructions:</strong></p>
+                <ol>
+                    <li>First click "Test Broker Login" above</li>
+                    <li>Then click "Open Add Listing Page" to see if it works</li>
+                    <li>If redirected to login, manually login with broker1/broker123</li>
+                    <li>Check if "Add Listing" button appears in navigation</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Test Property Creation API</h3>
+            <button onclick="testPropertyCreation()" id="createBtn" disabled>Test Property Creation</button>
+            <div id="propertyResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 5: Debug Information</h3>
+            <button onclick="showDebugInfo()">Show Debug Info</button>
+            <div id="debugInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let userData = null;
+
+        async function testBrokerLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>🔄 Testing broker login...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'broker1',
+                        password: 'broker123'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    authToken = result.token;
+                    userData = result.user;
+                    
+                    // Store in localStorage like the app does
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Broker Login Successful!</h4>
+                            <p><strong>Username:</strong> ${result.user.username}</p>
+                            <p><strong>Role:</strong> ${result.user.role}</p>
+                            <p><strong>ID:</strong> ${result.user.id}</p>
+                            <p><strong>Token:</strong> ${result.token.substring(0, 30)}...</p>
+                        </div>
+                    `;
+                    document.getElementById('createBtn').disabled = false;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Login Failed</h4>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Login Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('storageResult');
+            
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            let userObj = null;
+            try {
+                userObj = user ? JSON.parse(user) : null;
+            } catch (e) {
+                userObj = 'Invalid JSON';
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <h4>📱 Local Storage Contents</h4>
+                    <p><strong>Token exists:</strong> ${token ? 'Yes' : 'No'}</p>
+                    <p><strong>Token preview:</strong> ${token ? token.substring(0, 30) + '...' : 'None'}</p>
+                    <p><strong>User data:</strong></p>
+                    <pre>${JSON.stringify(userObj, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        async function testPropertyCreation() {
+            if (!authToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('propertyResult');
+            resultDiv.innerHTML = '<p>🔄 Testing property creation...</p>';
+            
+            const propertyData = {
+                title: 'Debug Test Property',
+                description: 'Property created during debugging',
+                price: '60000',
+                currency: 'ETB',
+                city: 'Addis Ababa',
+                area: 'Bole',
+                type: 'house_sale',
+                bedrooms: '3',
+                bathrooms: '2',
+                size: '150',
+                features: ['Parking', 'Garden'],
+                whatsappNumber: '+251911234567',
+                phoneNumber: '+251911234567'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/properties-working', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(propertyData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Property Created Successfully!</h4>
+                            <p><strong>Property ID:</strong> ${result.property.id}</p>
+                            <p><strong>Status:</strong> ${result.property.status}</p>
+                            <p><strong>Payment Amount:</strong> ${result.payment.amount} ETB</p>
+                            <p><strong>Payment ID:</strong> ${result.payment.id}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Property Creation Failed</h4>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Property Creation Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function showDebugInfo() {
+            const resultDiv = document.getElementById('debugInfo');
+            
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <h4>🔧 Debug Information</h4>
+                    <p><strong>Current URL:</strong> ${window.location.href}</p>
+                    <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+                    <p><strong>Local Storage Support:</strong> ${typeof(Storage) !== "undefined" ? 'Yes' : 'No'}</p>
+                    <p><strong>Fetch API Support:</strong> ${typeof(fetch) !== "undefined" ? 'Yes' : 'No'}</p>
+                    <p><strong>Current Time:</strong> ${new Date().toISOString()}</p>
+                    
+                    <h5>Expected Workflow:</h5>
+                    <ol>
+                        <li>Login as broker1/broker123</li>
+                        <li>Token and user data stored in localStorage</li>
+                        <li>Navigate to /broker/add-listing</li>
+                        <li>Page checks user role (should be 'broker')</li>
+                        <li>Form should be accessible</li>
+                        <li>Submit should call /api/properties-working</li>
+                    </ol>
+                    
+                    <h5>Possible Issues:</h5>
+                    <ul>
+                        <li>AuthContext not properly reading localStorage</li>
+                        <li>Role check failing in add-listing page</li>
+                        <li>Token not being sent with requests</li>
+                        <li>Page redirecting before form loads</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Auto-check localStorage on page load
+        window.onload = function() {
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>

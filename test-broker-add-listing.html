@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Broker Add Listing</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Broker Add Listing Functionality</h1>
+        
+        <div class="step">
+            <h3>Step 1: Login as Broker</h3>
+            <button onclick="testLogin()">Test Login</button>
+            <div id="loginResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Create Property Listing</h3>
+            <button onclick="testPropertyCreation()" id="createPropertyBtn" disabled>Test Property Creation</button>
+            <div id="propertyResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Check Navigation</h3>
+            <p>After login, check if "Add Listing" button appears in navigation for broker role.</p>
+            <a href="http://localhost:3000/login" target="_blank">Open Login Page</a>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>🔄 Testing login...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'broker1',
+                        password: 'broker123'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    authToken = result.token;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Login Successful!</h4>
+                            <p><strong>User:</strong> ${result.user.username}</p>
+                            <p><strong>Role:</strong> ${result.user.role}</p>
+                            <p><strong>Token:</strong> ${result.token.substring(0, 20)}...</p>
+                        </div>
+                    `;
+                    document.getElementById('createPropertyBtn').disabled = false;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Login Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Login Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testPropertyCreation() {
+            if (!authToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('propertyResult');
+            resultDiv.innerHTML = '<p>🔄 Creating property...</p>';
+            
+            const propertyData = {
+                title: 'Test Property from Browser',
+                description: 'A beautiful test property created from browser test',
+                price: '75000',
+                currency: 'ETB',
+                city: 'Addis Ababa',
+                area: 'Bole',
+                type: 'house_sale',
+                bedrooms: '3',
+                bathrooms: '2',
+                size: '150',
+                features: ['Parking', 'Garden', 'Modern Kitchen'],
+                whatsappNumber: '+251911234567',
+                phoneNumber: '+251911234567'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/properties-working', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(propertyData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Property Created Successfully!</h4>
+                            <p><strong>Property ID:</strong> ${result.property.id}</p>
+                            <p><strong>Status:</strong> ${result.property.status}</p>
+                            <h5>Payment Required:</h5>
+                            <p><strong>Amount:</strong> ${result.payment.amount} ETB</p>
+                            <p><strong>Payment ID:</strong> ${result.payment.id}</p>
+                            <p><strong>Bank Account:</strong> ${result.payment.bankAccountPlaceholder}</p>
+                            <p><strong>WhatsApp:</strong> ${result.payment.whatsappContactPlaceholder}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Property Creation Failed</h4>
+                            <p>${result.error}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Property Creation Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

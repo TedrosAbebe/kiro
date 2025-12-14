@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Banner System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .banner { 
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Banner System Test</h1>
+    
+    <h2>📡 API Test Results:</h2>
+    <div id="results"></div>
+    
+    <h2>📢 Current Banners:</h2>
+    <div id="banners"></div>
+
+    <script>
+        async function testBannerAPI() {
+            const resultsDiv = document.getElementById('results');
+            const bannersDiv = document.getElementById('banners');
+            
+            try {
+                // Test public banner API
+                const response = await fetch('/api/banners');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultsDiv.innerHTML = `
+                        <p class="success">✅ Banner API working!</p>
+                        <p>Found ${data.banners.length} active banners</p>
+                    `;
+                    
+                    // Display banners
+                    data.banners.forEach(banner => {
+                        const bannerDiv = document.createElement('div');
+                        bannerDiv.className = 'banner';
+                        bannerDiv.innerHTML = `
+                            <h3>${banner.icon} ${banner.title.en}</h3>
+                            <p>${banner.description.en}</p>
+                            <button style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px;">
+                                ${banner.buttonText.en}
+                            </button>
+                            <small style="display: block; margin-top: 10px; opacity: 0.8;">
+                                Type: ${banner.type} | Link: ${banner.buttonLink}
+                            </small>
+                        `;
+                        bannersDiv.appendChild(bannerDiv);
+                    });
+                } else {
+                    resultsDiv.innerHTML = `<p class="error">❌ API Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Network Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Test when page loads
+        testBannerAPI();
+    </script>
+</body>
+</html>

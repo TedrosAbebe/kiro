@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Broker Frontend Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .test-links { margin: 10px 0; }
+        .test-links a { display: inline-block; margin: 5px; padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Broker Frontend Access</h1>
+        
+        <div class="step">
+            <h3>Issue Diagnosis</h3>
+            <div class="success">
+                <p>✅ <strong>Backend API Working:</strong> Broker can create properties via API</p>
+                <p>❓ <strong>Frontend Issue:</strong> Need to check if broker can access add-listing page</p>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 1: Login as Broker</h3>
+            <button onclick="loginAsBroker()">Login as Broker</button>
+            <div id="loginResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Test Frontend Property Creation</h3>
+            <button onclick="testFrontendPropertyCreation()" id="createBtn" disabled>Test Frontend Creation</button>
+            <div id="createResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Manual Testing Links</h3>
+            <div class="test-links">
+                <a href="http://localhost:3002/login" target="_blank">🔐 Login Page</a>
+                <a href="http://localhost:3002/broker" target="_blank">👨‍💼 Broker Dashboard</a>
+                <a href="http://localhost:3002/broker/add-listing" target="_blank">➕ Add Listing Page</a>
+            </div>
+            <div class="success">
+                <h4>Manual Test Steps:</h4>
+                <ol>
+                    <li>Click "Login Page" → Login with broker1/broker123</li>
+                    <li>Should redirect to broker dashboard</li>
+                    <li>Look for "Add New Property" button</li>
+                    <li>Click it → Should go to add-listing form</li>
+                    <li>Fill form and submit</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Expected Behavior</h3>
+            <div class="success">
+                <h4>✅ What Should Work:</h4>
+                <ul>
+                    <li>Broker login → Redirect to /broker dashboard</li>
+                    <li>See "Add New Property" button in dashboard</li>
+                    <li>Click button → Go to /broker/add-listing</li>
+                    <li>Fill form → Submit successfully</li>
+                    <li>Get payment modal → Property created</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let brokerToken = null;
+
+        async function loginAsBroker() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>🔄 Logging in as broker...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'broker1',
+                        password: 'broker123'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    brokerToken = result.token;
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Broker Login Successful!</h4>
+                            <p><strong>Username:</strong> ${result.user.username}</p>
+                            <p><strong>Role:</strong> ${result.user.role}</p>
+                            <p>Token stored in localStorage</p>
+                            <p>Now try the manual testing links above!</p>
+                        </div>
+                    `;
+                    document.getElementById('createBtn').disabled = false;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Broker Login Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Broker Login Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testFrontendPropertyCreation() {
+            if (!brokerToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.innerHTML = '<p>🔄 Testing frontend property creation...</p>';
+            
+            const propertyData = {
+                title: 'Frontend Test Property',
+                description: 'This property was created through the frontend test interface.',
+                price: '70000',
+                currency: 'ETB',
+                city: 'Addis Ababa',
+                area: 'Bole',
+                type: 'house_sale',
+                bedrooms: '3',
+                bathrooms: '2',
+                size: '160',
+                features: ['Parking', 'Garden'],
+                whatsappNumber: '+251911234567',
+                phoneNumber: '+251911234567'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/properties-working', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${brokerToken}`
+                    },
+                    body: JSON.stringify(propertyData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Frontend Property Creation Successful!</h4>
+                            <p><strong>Property ID:</strong> ${result.property.id}</p>
+                            <p><strong>Payment Amount:</strong> ${result.payment.amount} ETB</p>
+                            <p>The API is working correctly!</p>
+                            <p><strong>Issue:</strong> Likely in the frontend form or navigation</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Frontend Property Creation Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Frontend Property Creation Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

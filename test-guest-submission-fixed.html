@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Guest Submission</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Guest Property Submission Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Test Guest Submission API</h3>
+        <button onclick="testGuestSubmission()">Test Guest Submission</button>
+        <div id="submissionResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Check Page Access</h3>
+        <p>Navigate to: <a href="/submit-property" target="_blank">/submit-property</a></p>
+        <p>Expected: Page loads without language errors</p>
+    </div>
+
+    <script>
+        async function testGuestSubmission() {
+            const resultDiv = document.getElementById('submissionResult');
+            resultDiv.innerHTML = '<p>🔄 Testing guest submission API...</p>';
+            
+            const testData = {
+                guestName: 'Test Guest',
+                guestPhone: '+251911234567',
+                guestWhatsapp: '+251911234567',
+                title: 'Test Property Submission',
+                description: 'This is a test property submission to verify the API is working.',
+                price: '500000',
+                currency: 'ETB',
+                city: 'Addis Ababa',
+                area: 'Bole',
+                type: 'house_sale',
+                bedrooms: '3',
+                bathrooms: '2',
+                size: '150',
+                features: ['Parking', 'Garden']
+            };
+            
+            try {
+                const response = await fetch('/api/guest-submissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Guest Submission Success!</h4>
+                            <p><strong>Submission ID:</strong> ${data.submissionId}</p>
+                            <p><strong>Property ID:</strong> ${data.propertyId}</p>
+                            <p>The submission has been created and is pending admin review.</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Guest Submission Failed</h4>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Network Error</h4>
+                        <p>${error.message}</p>
+                        <p>Make sure the Next.js server is running with: <code>npm run dev</code></p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-run the test on page load
+        window.onload = function() {
+            console.log('Guest submission test page loaded');
+        };
+    </script>
+</body>
+</html>

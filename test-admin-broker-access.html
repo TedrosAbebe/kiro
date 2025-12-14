@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Broker Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .test-links { margin: 10px 0; }
+        .test-links a { display: inline-block; margin: 5px; padding: 8px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 3px; }
+        .admin-links a { background: #dc3545; }
+        .broker-links a { background: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Admin Broker Access Fix</h1>
+        
+        <div class="step">
+            <h3>Issue Fixed</h3>
+            <div class="success">
+                <p><strong>✅ Problem:</strong> Admin users could access broker page but couldn't add listings</p>
+                <p><strong>✅ Solution:</strong> Updated add-listing page and navigation to allow both brokers and admins</p>
+                <p><strong>✅ Changes Made:</strong></p>
+                <ul>
+                    <li>Modified role check in <code>/broker/add-listing</code> page</li>
+                    <li>Updated Navigation component to show "Add Listing" for admins</li>
+                    <li>Backend API already supported admin property creation</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Test 1: Admin Login</h3>
+            <button onclick="testAdminLogin()">Test Admin Login</button>
+            <div id="adminLoginResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Test 2: Broker Login</h3>
+            <button onclick="testBrokerLogin()">Test Broker Login</button>
+            <div id="brokerLoginResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Test 3: Manual Testing Links</h3>
+            <div class="info">
+                <p><strong>Instructions:</strong></p>
+                <ol>
+                    <li>Test admin login above, then click admin links</li>
+                    <li>Test broker login above, then click broker links</li>
+                    <li>Verify both can access add-listing page</li>
+                    <li>Verify "Add Listing" button appears in navigation for both</li>
+                </ol>
+            </div>
+            
+            <h4>Admin Test Links:</h4>
+            <div class="test-links admin-links">
+                <a href="http://localhost:3000/login" target="_blank">Login Page</a>
+                <a href="http://localhost:3000/admin-working" target="_blank">Admin Dashboard</a>
+                <a href="http://localhost:3000/broker" target="_blank">Broker Page (Admin Access)</a>
+                <a href="http://localhost:3000/broker/add-listing" target="_blank">Add Listing (Admin Access)</a>
+            </div>
+            
+            <h4>Broker Test Links:</h4>
+            <div class="test-links broker-links">
+                <a href="http://localhost:3000/login" target="_blank">Login Page</a>
+                <a href="http://localhost:3000/broker" target="_blank">Broker Dashboard</a>
+                <a href="http://localhost:3000/broker/add-listing" target="_blank">Add Listing (Broker)</a>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Test 4: Property Creation API</h3>
+            <button onclick="testAdminPropertyCreation()" id="adminCreateBtn" disabled>Test Admin Property Creation</button>
+            <button onclick="testBrokerPropertyCreation()" id="brokerCreateBtn" disabled>Test Broker Property Creation</button>
+            <div id="propertyResults"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Expected Behavior</h3>
+            <div class="info">
+                <h4>✅ Admin Users Should:</h4>
+                <ul>
+                    <li>See "Admin" button in navigation</li>
+                    <li>See "Broker" button in navigation</li>
+                    <li>See "Add Listing" button in navigation</li>
+                    <li>Access /broker page successfully</li>
+                    <li>Access /broker/add-listing page successfully</li>
+                    <li>Create properties via API successfully</li>
+                </ul>
+                
+                <h4>✅ Broker Users Should:</h4>
+                <ul>
+                    <li>NOT see "Admin" button in navigation</li>
+                    <li>See "Broker" button in navigation</li>
+                    <li>See "Add Listing" button in navigation</li>
+                    <li>Access /broker page successfully</li>
+                    <li>Access /broker/add-listing page successfully</li>
+                    <li>Create properties via API successfully</li>
+                </ul>
+                
+                <h4>❌ Regular Users Should:</h4>
+                <ul>
+                    <li>NOT see "Admin" button</li>
+                    <li>NOT see "Broker" button</li>
+                    <li>NOT see "Add Listing" button</li>
+                    <li>Be redirected from /broker pages</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminToken = null;
+        let brokerToken = null;
+
+        async function testAdminLogin() {
+            const resultDiv = document.getElementById('adminLoginResult');
+            resultDiv.innerHTML = '<p>🔄 Testing admin login...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    adminToken = result.token;
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Admin Login Successful!</h4>
+                            <p><strong>Username:</strong> ${result.user.username}</p>
+                            <p><strong>Role:</strong> ${result.user.role}</p>
+                            <p>Now try the admin test links above!</p>
+                        </div>
+                    `;
+                    document.getElementById('adminCreateBtn').disabled = false;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Admin Login Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Admin Login Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testBrokerLogin() {
+            const resultDiv = document.getElementById('brokerLoginResult');
+            resultDiv.innerHTML = '<p>🔄 Testing broker login...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'broker1',
+                        password: 'broker123'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    brokerToken = result.token;
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Broker Login Successful!</h4>
+                            <p><strong>Username:</strong> ${result.user.username}</p>
+                            <p><strong>Role:</strong> ${result.user.role}</p>
+                            <p>Now try the broker test links above!</p>
+                        </div>
+                    `;
+                    document.getElementById('brokerCreateBtn').disabled = false;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Broker Login Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Broker Login Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAdminPropertyCreation() {
+            if (!adminToken) {
+                alert('Please login as admin first!');
+                return;
+            }
+            
+            await testPropertyCreation(adminToken, 'Admin', 'Admin Test Property');
+        }
+
+        async function testBrokerPropertyCreation() {
+            if (!brokerToken) {
+                alert('Please login as broker first!');
+                return;
+            }
+            
+            await testPropertyCreation(brokerToken, 'Broker', 'Broker Test Property');
+        }
+
+        async function testPropertyCreation(token, userType, title) {
+            const resultDiv = document.getElementById('propertyResults');
+            resultDiv.innerHTML += `<p>🔄 Testing ${userType} property creation...</p>`;
+            
+            const propertyData = {
+                title: title,
+                description: `A test property created by ${userType}`,
+                price: '60000',
+                currency: 'ETB',
+                city: 'Addis Ababa',
+                area: 'Bole',
+                type: 'house_sale',
+                bedrooms: '3',
+                bathrooms: '2',
+                size: '150',
+                features: ['Parking', 'Garden'],
+                whatsappNumber: '+251911234567',
+                phoneNumber: '+251911234567'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/properties-working', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(propertyData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML += `
+                        <div class="success">
+                            <h4>✅ ${userType} Property Creation Successful!</h4>
+                            <p><strong>Property ID:</strong> ${result.property.id}</p>
+                            <p><strong>Payment Amount:</strong> ${result.payment.amount} ETB</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML += `
+                        <div class="error">
+                            <h4>❌ ${userType} Property Creation Failed</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <div class="error">
+                        <h4>❌ ${userType} Property Creation Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

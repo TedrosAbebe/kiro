@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Property API</title>
+</head>
+<body>
+    <h1>Test Property Creation API</h1>
+    <button onclick="testLogin()">1. Test Login</button>
+    <button onclick="testPropertyCreation()">2. Test Property Creation</button>
+    <div id="output"></div>
+
+    <script>
+        let authToken = '';
+
+        async function testLogin() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>Testing login...</p>';
+
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'broker1',
+                        password: 'broker123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    output.innerHTML = `<p style="color: green;">✅ Login successful! Token: ${authToken.substring(0, 20)}...</p>`;
+                } else {
+                    output.innerHTML = `<p style="color: red;">❌ Login failed: ${data.error}</p>`;
+                }
+            } catch (error) {
+                output.innerHTML = `<p style="color: red;">❌ Login error: ${error.message}</p>`;
+            }
+        }
+
+        async function testPropertyCreation() {
+            const output = document.getElementById('output');
+            
+            if (!authToken) {
+                output.innerHTML = '<p style="color: red;">❌ Please login first!</p>';
+                return;
+            }
+
+            output.innerHTML = '<p>Testing property creation...</p>';
+
+            const propertyData = {
+                title: 'Test Property from API',
+                description: 'Test description',
+                price: 200000,
+                currency: 'ETB',
+                city: 'Addis Ababa',
+                area: 'Bole',
+                type: 'house_sale',
+                bedrooms: 3,
+                bathrooms: 2,
+                size: 150,
+                features: ['Parking', 'Garden'],
+                whatsappNumber: '+251911234567',
+                phoneNumber: '+251911234567'
+            };
+
+            try {
+                const response = await fetch('http://localhost:3001/api/properties', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(propertyData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    output.innerHTML = `<p style="color: green;">✅ Property created successfully! ID: ${data.property.id}</p>`;
+                } else {
+                    output.innerHTML = `<p style="color: red;">❌ Property creation failed: ${data.error}</p>`;
+                }
+            } catch (error) {
+                output.innerHTML = `<p style="color: red;">❌ Property creation error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

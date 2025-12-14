@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Advertiser Delete API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .delete-btn { background-color: #dc3545; color: white; border: none; border-radius: 3px; }
+        .test-btn { background-color: #007bff; color: white; border: none; border-radius: 3px; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Advertiser Delete API Test</h1>
+    
+    <div class="test-section">
+        <h3>📋 Current Advertiser Applications</h3>
+        <button class="test-btn" onclick="fetchApplications()">Refresh Applications</button>
+        <div id="applications-list"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🗑️ Test Delete Individual Application</h3>
+        <p>This will test the individual delete functionality that was failing.</p>
+        <input type="number" id="deleteId" placeholder="Application ID" value="2">
+        <button class="delete-btn" onclick="testDeleteApplication()">Test Delete</button>
+        <div id="delete-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔄 Create Test Application</h3>
+        <p>Create a new test application for testing deletion.</p>
+        <button class="test-btn" onclick="createTestApplication()">Create Test Application</button>
+        <div id="create-result"></div>
+    </div>
+
+    <script>
+        let applications = [];
+
+        async function fetchApplications() {
+            try {
+                const response = await fetch('/api/admin/advertiser-applications');
+                const data = await response.json();
+                
+                if (data.success) {
+                    applications = data.applications;
+                    displayApplications();
+                } else {
+                    document.getElementById('applications-list').innerHTML = 
+                        `<div class="error">Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('applications-list').innerHTML = 
+                    `<div class="error">Network Error: ${error.message}</div>`;
+            }
+        }
+
+        function displayApplications() {
+            const container = document.getElementById('applications-list');
+            
+            if (applications.length === 0) {
+                container.innerHTML = '<p>No applications found.</p>';
+                return;
+            }
+
+            let html = '<table border="1" style="width: 100%; border-collapse: collapse;">';
+            html += '<tr><th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>';
+            
+            applications.forEach(app => {
+                html += `<tr>
+                    <td>${app.id}</td>
+                    <td>${app.full_name}</td>
+                    <td>${app.email}</td>
+                    <td>${app.status}</td>
+                    <td>
+                        <button class="delete-btn" onclick="testDeleteApplication(${app.id}, '${app.full_name}')">
+                            Delete
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        async function testDeleteApplication(appId = null, fullName = 'Test Application') {
+            const applicationId = appId || document.getElementById('deleteId').value;
+            
+            if (!applicationId) {
+                alert('Please enter an Application ID');
+                return;
+            }
+
+            console.log('🗑️ Testing delete for application ID:', applicationId);
+
+            try {
+                const response = await fetch('/api/admin/advertiser-applications', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        applicationId: parseInt(applicationId),
+                        deleteAccount: true
+                    })
+                });
+
+                const data = await response.json();
+                console.log('API Response:', data);
+
+                const resultDiv = document.getElementById('delete-result');
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Success!</h4>
+                            <p>${data.message}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    // Refresh the applications list
+                    fetchApplications();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Failed!</h4>
+                            <p>Error: ${data.message}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                document.getElementById('delete-result').innerHTML = `
+                    <div class="error">
+                        <h4>🌐 Network Error!</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function createTestApplication() {
+            try {
+                const response = await fetch('/api/auth/register-advertiser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fullName: 'Test Advertiser ' + Date.now(),
+                        email: 'test' + Date.now() + '@example.com',
+                        phoneNumber: '+251911111111',
+                        whatsappNumber: '+251911111111',
+                        businessName: 'Test Business',
+                        businessType: 'real_estate_agency',
+                        city: 'Addis Ababa',
+                        area: 'Bole',
+                        services: ['property_sales'],
+                        description: 'Test advertiser for deletion testing'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Create Response:', data);
+
+                const resultDiv = document.getElementById('create-result');
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Test Application Created!</h4>
+                            <p>${data.message}</p>
+                        </div>
+                    `;
+                    // Refresh the applications list
+                    fetchApplications();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Failed to Create!</h4>
+                            <p>Error: ${data.message}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                document.getElementById('create-result').innerHTML = `
+                    <div class="error">
+                        <h4>🌐 Network Error!</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load applications on page load
+        window.onload = function() {
+            fetchApplications();
+        };
+    </script>
+</body>
+</html>

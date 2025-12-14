@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Phone Call Functionality</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .property-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: white;
+        }
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .button-row {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-blue { background: #2563eb; color: white; }
+        .btn-blue:hover { background: #1d4ed8; }
+        .btn-green { background: #16a34a; color: white; flex: 1; }
+        .btn-green:hover { background: #15803d; }
+        .btn-orange { background: #ea580c; color: white; flex: 1; }
+        .btn-orange:hover { background: #c2410c; }
+        .test-info {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Phone Call Functionality Test</h1>
+        
+        <div class="test-info">
+            <h3>📱 Testing Instructions:</h3>
+            <ul>
+                <li><strong>View Details:</strong> Should navigate to property details page</li>
+                <li><strong>WhatsApp:</strong> Should open WhatsApp with pre-filled message</li>
+                <li><strong>Call:</strong> Should open phone dialer with the property owner's number</li>
+            </ul>
+            <p><em>Note: Phone calling will work on mobile devices and desktop apps that support tel: links</em></p>
+        </div>
+
+        <div class="property-card">
+            <h3>🏡 Sample Property: Modern Villa in Addis Ababa</h3>
+            <p><strong>Price:</strong> 2,500,000 ETB</p>
+            <p><strong>Location:</strong> Bole, Addis Ababa</p>
+            <p><strong>Type:</strong> Villa Sale</p>
+            <p><strong>Bedrooms:</strong> 4 bedrooms</p>
+            <p><strong>Size:</strong> 350 m²</p>
+            
+            <div class="buttons">
+                <a href="/property/sample-id" class="btn btn-blue">
+                    View Details
+                </a>
+                
+                <div class="button-row">
+                    <button onclick="handleWhatsAppContact('+251911123456', 'Modern Villa in Addis Ababa')" class="btn btn-green">
+                        WhatsApp
+                    </button>
+                    
+                    <button onclick="handlePhoneCall('+251911123456')" class="btn btn-orange">
+                        📞 Call
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="property-card">
+            <h3>🏢 Sample Property: Downtown Apartment</h3>
+            <p><strong>Price:</strong> 15,000 ETB/month</p>
+            <p><strong>Location:</strong> Piazza, Addis Ababa</p>
+            <p><strong>Type:</strong> Apartment Rent</p>
+            <p><strong>Bedrooms:</strong> 2 bedrooms</p>
+            <p><strong>Size:</strong> 120 m²</p>
+            
+            <div class="buttons">
+                <a href="/property/sample-id-2" class="btn btn-blue">
+                    View Details
+                </a>
+                
+                <div class="button-row">
+                    <button onclick="handleWhatsAppContact('+251922654321', 'Downtown Apartment')" class="btn btn-green">
+                        WhatsApp
+                    </button>
+                    
+                    <button onclick="handlePhoneCall('+251922654321')" class="btn btn-orange">
+                        📞 Call
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #f0f9ff; border-radius: 8px;">
+            <h3>✅ Expected Behavior:</h3>
+            <ul>
+                <li><strong>WhatsApp Button:</strong> Opens WhatsApp with message "Hi, I'm interested in the property: [Property Title]"</li>
+                <li><strong>Call Button:</strong> Opens phone dialer with the property owner's phone number</li>
+                <li><strong>View Details:</strong> Navigates to the property details page</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function handleWhatsAppContact(whatsappNumber, propertyTitle) {
+            const message = `Hi, I'm interested in the property: ${propertyTitle}`;
+            const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+            console.log('Opening WhatsApp:', whatsappUrl);
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function handlePhoneCall(phoneNumber) {
+            const cleanPhoneNumber = phoneNumber.replace(/[^0-9+]/g, '');
+            const telUrl = `tel:${cleanPhoneNumber}`;
+            console.log('Initiating phone call:', telUrl);
+            window.location.href = telUrl;
+        }
+
+        // Test logging
+        console.log('Phone call functionality test page loaded');
+        console.log('Available functions:', {
+            handleWhatsAppContact: typeof handleWhatsAppContact,
+            handlePhoneCall: typeof handlePhoneCall
+        });
+    </script>
+</body>
+</html>

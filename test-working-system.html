@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Working System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        input, select, textarea { margin: 5px; padding: 8px; width: 200px; }
+        button { padding: 10px 15px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Working Property System</h1>
+    
+    <div class="section">
+        <h2>1. Login Test</h2>
+        <input type="text" id="username" placeholder="Username" value="broker1">
+        <input type="password" id="password" placeholder="Password" value="broker123">
+        <button onclick="testLogin()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. Property Creation Test</h2>
+        <input type="text" id="title" placeholder="Property Title" value="Test Property">
+        <input type="number" id="price" placeholder="Price" value="200000">
+        <input type="text" id="city" placeholder="City" value="Addis Ababa">
+        <input type="text" id="area" placeholder="Area" value="Bole">
+        <select id="type">
+            <option value="house_sale">House for Sale</option>
+            <option value="house_rent">House for Rent</option>
+        </select>
+        <input type="number" id="size" placeholder="Size" value="150">
+        <input type="text" id="phone" placeholder="Phone" value="+251911234567">
+        <input type="text" id="whatsapp" placeholder="WhatsApp" value="+251911234567">
+        <button onclick="testPropertyCreation()">Create Property</button>
+        <div id="propertyResult"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        async function testLogin() {
+            const result = document.getElementById('loginResult');
+            result.innerHTML = '<p>Testing login...</p>';
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:3001/api/auth-working/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    result.innerHTML = \`<p class="success">✅ Login successful! User: \${data.user.username} (\${data.user.role})</p>\`;
+                } else {
+                    result.innerHTML = \`<p class="error">❌ Login failed: \${data.error}</p>\`;
+                }
+            } catch (error) {
+                result.innerHTML = \`<p class="error">❌ Login error: \${error.message}</p>\`;
+            }
+        }
+
+        async function testPropertyCreation() {
+            const result = document.getElementById('propertyResult');
+            
+            if (!authToken) {
+                result.innerHTML = '<p class="error">❌ Please login first!</p>';
+                return;
+            }
+
+            result.innerHTML = '<p>Testing property creation...</p>';
+
+            const propertyData = {
+                title: document.getElementById('title').value,
+                price: document.getElementById('price').value,
+                city: document.getElementById('city').value,
+                area: document.getElementById('area').value,
+                type: document.getElementById('type').value,
+                size: document.getElementById('size').value,
+                whatsappNumber: document.getElementById('whatsapp').value,
+                phoneNumber: document.getElementById('phone').value,
+                description: 'Test property description',
+                bedrooms: 3,
+                bathrooms: 2,
+                features: ['Parking', 'Garden']
+            };
+
+            try {
+                const response = await fetch('http://localhost:3001/api/properties-working', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': \`Bearer \${authToken}\`
+                    },
+                    body: JSON.stringify(propertyData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    result.innerHTML = \`<p class="success">✅ Property created successfully! 
+                        <br>Property ID: \${data.property.id}
+                        <br>Payment Amount: \${data.payment.amount} ETB
+                        <br>Status: \${data.property.status}</p>\`;
+                } else {
+                    result.innerHTML = \`<p class="error">❌ Property creation failed: \${data.error}</p>\`;
+                }
+            } catch (error) {
+                result.innerHTML = \`<p class="error">❌ Property creation error: \${error.message}</p>\`;
+            }
+        }
+    </script>
+</body>
+</html>

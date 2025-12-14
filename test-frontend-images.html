@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Image Test - Tag Bridge Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .property-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+        .image-container {
+            width: 300px;
+            height: 200px;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .loading {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Frontend Image Test</h1>
+        <p>Testing if images from the API are displaying correctly in the browser.</p>
+        
+        <div id="status" class="loading">Loading properties...</div>
+        <div id="properties"></div>
+    </div>
+
+    <script>
+        async function testImages() {
+            const statusDiv = document.getElementById('status');
+            const propertiesDiv = document.getElementById('properties');
+            
+            try {
+                statusDiv.textContent = 'Fetching properties from API...';
+                
+                const response = await fetch('/api/properties-working');
+                const data = await response.json();
+                
+                if (!data.success || !data.properties) {
+                    throw new Error('API returned error or no properties');
+                }
+                
+                statusDiv.textContent = `✅ Found ${data.properties.length} properties`;
+                statusDiv.className = 'success';
+                
+                data.properties.forEach((property, index) => {
+                    const propertyDiv = document.createElement('div');
+                    propertyDiv.className = 'property-card';
+                    
+                    const hasImages = property.images && property.images.length > 0;
+                    const isPlaceholder = hasImages && property.images[0].includes('placeholder');
+                    const isBase64 = hasImages && property.images[0].startsWith('data:');
+                    
+                    propertyDiv.innerHTML = `
+                        <h3>${property.title}</h3>
+                        <p><strong>ID:</strong> ${property.id}</p>
+                        <p><strong>Images:</strong> ${property.images ? property.images.length : 0} photos</p>
+                        <p><strong>Image Type:</strong> ${
+                            !hasImages ? 'No images' :
+                            isPlaceholder ? 'Placeholder' :
+                            isBase64 ? 'Base64 Data' :
+                            'URL'
+                        }</p>
+                        
+                        ${hasImages ? `
+                            <div class="image-container">
+                                <img src="${property.images[0]}" 
+                                     alt="${property.title}"
+                                     onload="console.log('✅ Image loaded:', '${property.title}')"
+                                     onerror="console.error('❌ Image failed:', '${property.title}'); this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display:none; color:red;">❌ Image failed to load</div>
+                            </div>
+                            <p><strong>Image Preview:</strong> ${property.images[0].substring(0, 100)}...</p>
+                        ` : '<p>No images to display</p>'}
+                    `;
+                    
+                    propertiesDiv.appendChild(propertyDiv);
+                });
+                
+            } catch (error) {
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+                statusDiv.className = 'error';
+                console.error('Test error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        document.addEventListener('DOMContentLoaded', testImages);
+    </script>
+</body>
+</html>
