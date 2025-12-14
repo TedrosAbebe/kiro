@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Modern Home Buy & Sell Broker App for Ethiopia",
   "main": "index.js",
-  "scripts": {
+  "scripts": {"vercel-build": "npm install --legacy-peer-deps && next build"
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
