@@ -117,100 +117,111 @@ try {
   console.log('\n4️⃣ Creating working API file...');
   
   // Create a working API file
-  const apiContent = `import { NextRequest, NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-import { join } from 'path'
-import jwt from 'jsonwebtoken'
+  const apiContent = `import { NextRequest, NextResponse } from 'next/server';
+import sqlite3 from 'sqlite3';
+sqlite3.verbose();
+import { join } from 'path';
+import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-function getUserFromToken(token: string) {
+function getUserFromToken(token) {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
+    const decoded = jwt.verify(token, JWT_SECRET);
     return {
       id: decoded.id,
       username: decoded.username,
       role: decoded.role
-    }
+    };
   } catch (error) {
-    return null
+    return null;
   }
 }
 
-export async function POST(request: NextRequest) {
-  console.log('🏠 WORKING PROPERTY API CALLED')
-  
+export async function POST(request) {
+  console.log('🏠 WORKING PROPERTY API CALLED');
+
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+
     if (!token) {
-      console.log('❌ No token')
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      console.log('❌ No token');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const user = getUserFromToken(token)
+    const user = getUserFromToken(token);
     if (!user) {
-      console.log('❌ Invalid token')
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      console.log('❌ Invalid token');
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    console.log('✅ User authenticated:', user.username)
+    console.log('✅ User authenticated:', user.username);
 
-    const data = await request.json()
-    console.log('📝 Property data:', data.title, data.price)
+    const data = await request.json();
+    console.log('📝 Property data:', data.title, data.price);
 
     // Validation
     if (!data.title || !data.price || !data.city || !data.area || !data.type || !data.size || !data.whatsappNumber || !data.phoneNumber) {
-      console.log('❌ Missing fields')
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      console.log('❌ Missing fields');
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const dbPath = join(process.cwd(), 'data', 'broker-clean.db')
-    const db = new Database(dbPath)
+    const dbPath = join(process.cwd(), 'data', 'broker-clean.db');
+    const db = new sqlite3.Database(dbPath);
 
     try {
-      const propertyId = 'prop-' + Date.now()
-      
-      console.log('💾 Inserting property...')
-      
-      const insertProperty = db.prepare(\`
-        INSERT INTO properties (id, title, price, city, area, type, size, owner_id, whatsapp_number, phone_number)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      \`)
-      
-      insertProperty.run(
-        propertyId,
-        data.title,
-        parseFloat(data.price),
-        data.city,
-        data.area,
-        data.type,
-        parseFloat(data.size),
-        user.id,
-        data.whatsappNumber,
-        data.phoneNumber
-      )
+      const propertyId = 'prop-' + Date.now();
 
-      console.log('✅ Property inserted')
+      console.log('💾 Inserting property...');
+
+      await new Promise((resolve, reject) => {
+        db.run(
+          \`INSERT INTO properties (id, title, price, city, area, type, size, owner_id, whatsapp_number, phone_number)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+          [
+            propertyId,
+            data.title,
+            parseFloat(data.price),
+            data.city,
+            data.area,
+            data.type,
+            parseFloat(data.size),
+            user.id,
+            data.whatsappNumber,
+            data.phoneNumber
+          ],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      console.log('✅ Property inserted');
 
       // Create payment
-      const paymentId = 'pay-' + Date.now()
-      const amount = data.type === 'house_rent' ? 25 : 50
-      
-      const insertPayment = db.prepare(\`
-        INSERT INTO payments (id, property_id, user_id, amount, payment_type)
-        VALUES (?, ?, ?, ?, ?)
-      \`)
-      
-      insertPayment.run(
-        paymentId,
-        propertyId,
-        user.id,
-        amount,
-        data.type === 'house_rent' ? 'rent_listing' : 'sale_listing'
-      )
+      const paymentId = 'pay-' + Date.now();
+      const amount = data.type === 'house_rent' ? 25 : 50;
 
-      console.log('✅ Payment created')
+      await new Promise((resolve, reject) => {
+        db.run(
+          \`INSERT INTO payments (id, property_id, user_id, amount, payment_type)
+           VALUES (?, ?, ?, ?, ?)\`,
+          [
+            paymentId,
+            propertyId,
+            user.id,
+            amount,
+            data.type === 'house_rent' ? 'rent_listing' : 'sale_listing'
+          ],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      console.log('✅ Payment created');
 
       return NextResponse.json({
         success: true,
@@ -221,15 +232,15 @@ export async function POST(request: NextRequest) {
           bankAccountPlaceholder: 'Commercial Bank - 1000123456789',
           whatsappContactPlaceholder: '+251911234567'
         }
-      })
+      });
 
     } finally {
-      db.close()
+      db.close();
     }
 
   } catch (error) {
-    console.error('❌ API Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('❌ API Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }`;
 
